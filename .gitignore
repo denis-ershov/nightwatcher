@@ -1,3 +1,11 @@
+# Replit
+.replit
+replit.nix
+.cache/
+.upm/
+.pythonlibs/
+.local/
+
 # Environment variables
 .env
 .env.local
