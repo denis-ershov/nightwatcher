@@ -8,5 +8,10 @@ PROWLARR_API_KEY = os.getenv("PROWLARR_API_KEY")
 TG_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TG_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-SESSION_SECRET = os.getenv("SESSION_SECRET", "nightwatcher-secret-key-change-me")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+SESSION_SECRET = os.getenv("SESSION_SECRET")
+
+if not ADMIN_PASSWORD:
+    raise ValueError("ADMIN_PASSWORD environment variable is required")
+if not SESSION_SECRET:
+    raise ValueError("SESSION_SECRET environment variable is required")

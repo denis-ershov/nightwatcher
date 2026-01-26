@@ -11,7 +11,14 @@ from app.config import ADMIN_PASSWORD, SESSION_SECRET
 from app.omdb import fetch_movie_info
 
 app = FastAPI(title="NightWatcher")
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET or "fallback-secret")
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=SESSION_SECRET,
+    session_cookie="nightwatcher_session",
+    max_age=86400,
+    same_site="lax",
+    https_only=False
+)
 
 templates = Jinja2Templates(directory="app/templates")
 
