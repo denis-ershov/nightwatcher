@@ -6,11 +6,6 @@ fastapi
 uvicorn
 jinja2
 python-multipart
-fastapi
-jinja2
-psycopg2-binary
-python-dotenv
-python-multipart
-requests
-sqlalchemy
-uvicorn
+httpx
+itsdangerous
+starlette-session

@@ -1,20 +1,696 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-<meta charset="utf-8">
-<title>NightWatcher</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NightWatcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            font-size: 36px;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-danger {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(233, 69, 96, 0.3);
+        }
+        
+        .btn-success {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+            border: 1px solid rgba(46, 213, 115, 0.3);
+        }
+        
+        .btn-success:hover {
+            background: rgba(46, 213, 115, 0.3);
+        }
+        
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .add-form {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .add-form h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .form-row input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 18px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-row input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+        
+        .form-row input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        
+        .item-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(233, 69, 96, 0.3);
+        }
+        
+        .item-card.disabled {
+            opacity: 0.5;
+        }
+        
+        .item-poster {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .item-poster-placeholder {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 80px;
+        }
+        
+        .item-content {
+            padding: 20px;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .item-title {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .item-type {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        
+        .item-type.movie {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+        }
+        
+        .item-type.tv {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+        }
+        
+        .item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .item-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .item-genre {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+        }
+        
+        .item-plot {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .item-footer {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .item-footer .btn {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.active {
+            background: #2ed573;
+        }
+        
+        .status-dot.inactive {
+            background: #ff6b6b;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 15px;
+        }
+        
+        .form-group select option {
+            background: #1a1a2e;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(46, 213, 115, 0.9);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1001;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: rgba(233, 69, 96, 0.9);
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .item-poster, .item-poster-placeholder {
+                height: 250px;
+            }
+        }
+    </style>
 </head>
 <body>
-<h1>🌙 NightWatcher</h1>
-<form method="post" action="/add">
-<input name="imdb_id" placeholder="tt1234567" required>
-<input name="title" placeholder="Title">
-<button>Add</button>
-</form>
-<ul>
-{% for i in items %}
-<li>{{ i.imdb_id }} — {{ i.title }}</li>
-{% endfor %}
-</ul>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🌙</span>
+                <h1>NightWatcher</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-success" onclick="runSearch()">
+                    🔍 Запустить поиск
+                </button>
+                <a href="/logout" class="btn btn-secondary">Выйти</a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main">
+        <div class="add-form">
+            <h2>➕ Добавить в отслеживание</h2>
+            <form method="post" action="/add" class="form-row">
+                <input type="text" name="imdb_id" placeholder="IMDb ID (например: tt0111161)" required>
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </form>
+        </div>
+        
+        {% if items %}
+        <div class="items-grid">
+            {% for item in items %}
+            <div class="item-card {% if not item.enabled %}disabled{% endif %}" data-id="{{ item.id }}">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="item-poster">
+                {% else %}
+                <div class="item-poster-placeholder">
+                    {% if item.type == 'tv' %}📺{% else %}🎬{% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="item-content">
+                    <div class="item-header">
+                        <div class="item-title">{{ item.title or item.imdb_id }}</div>
+                        <span class="item-type {{ item.type }}">{{ item.type }}</span>
+                    </div>
+                    
+                    <div class="item-meta">
+                        {% if item.year %}
+                        <span>📅 {{ item.year }}</span>
+                        {% endif %}
+                        {% if item.rating %}
+                        <span>⭐ {{ item.rating }}</span>
+                        {% endif %}
+                        {% if item.runtime %}
+                        <span>⏱️ {{ item.runtime }}</span>
+                        {% endif %}
+                        {% if item.total_seasons %}
+                        <span>📺 {{ item.total_seasons }} сезонов</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if item.genre %}
+                    <div class="item-genre">🎭 {{ item.genre }}</div>
+                    {% endif %}
+                    
+                    {% if item.plot %}
+                    <div class="item-plot">{{ item.plot }}</div>
+                    {% endif %}
+                    
+                    <div class="item-status">
+                        <span class="status-dot {% if item.enabled %}active{% else %}inactive{% endif %}"></span>
+                        {% if item.enabled %}Отслеживается{% else %}Приостановлено{% endif %}
+                        {% if item.last_checked %}
+                        • Проверено: {{ item.last_checked.strftime('%d.%m.%Y %H:%M') if item.last_checked else 'никогда' }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="item-footer">
+                        <button class="btn btn-secondary" onclick="toggleItem({{ item.id }})">
+                            {% if item.enabled %}⏸️ Пауза{% else %}▶️ Включить{% endif %}
+                        </button>
+                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title }}', '{{ item.type }}')">
+                            ✏️ Изменить
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshItem({{ item.id }})">
+                            🔄 Обновить
+                        </button>
+                        <button class="btn btn-secondary" onclick="showReleases('{{ item.imdb_id }}', '{{ item.title }}')">
+                            📥 Релизы
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteItem({{ item.id }})">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>Список пуст</h3>
+            <p>Добавьте фильмы или сериалы по IMDb ID для отслеживания</p>
+        </div>
+        {% endif %}
+    </main>
+    
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Редактировать</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form method="post" id="editForm">
+                <div class="form-group">
+                    <label for="editTitle">Название</label>
+                    <input type="text" id="editTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="editType">Тип</label>
+                    <select id="editType" name="type">
+                        <option value="movie">Фильм</option>
+                        <option value="tv">Сериал</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="modal" id="releasesModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="releasesTitle">📥 Релизы</h3>
+                <button class="modal-close" onclick="closeReleasesModal()">&times;</button>
+            </div>
+            <div id="releasesList"></div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+        
+        async function deleteItem(id) {
+            if (!confirm('Удалить эту запись?')) return;
+            
+            const res = await fetch(`/delete/${id}`, { method: 'POST' });
+            if (res.ok) {
+                document.querySelector(`[data-id="${id}"]`).remove();
+                showToast('Запись удалена');
+            } else {
+                showToast('Ошибка удаления', true);
+            }
+        }
+        
+        async function toggleItem(id) {
+            const res = await fetch(`/toggle/${id}`, { method: 'POST' });
+            if (res.ok) {
+                location.reload();
+            }
+        }
+        
+        async function refreshItem(id) {
+            showToast('Обновление данных...');
+            const res = await fetch(`/refresh/${id}`, { method: 'POST' });
+            if (res.ok) {
+                location.reload();
+            } else {
+                showToast('Ошибка обновления', true);
+            }
+        }
+        
+        async function runSearch() {
+            showToast('Запуск поиска релизов...');
+            const res = await fetch('/search', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                showToast(`Поиск завершен. Найдено: ${data.found}`);
+            } else {
+                showToast('Ошибка поиска', true);
+            }
+        }
+        
+        function openEditModal(id, title, type) {
+            document.getElementById('editForm').action = `/edit/${id}`;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editType').value = type;
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+        
+        async function showReleases(imdbId, title) {
+            document.getElementById('releasesTitle').textContent = `📥 Релизы: ${title}`;
+            document.getElementById('releasesList').innerHTML = '<div class="loading"></div>';
+            document.getElementById('releasesModal').classList.add('active');
+            
+            const res = await fetch(`/api/releases/${imdbId}`);
+            const releases = await res.json();
+            
+            if (releases.length === 0) {
+                document.getElementById('releasesList').innerHTML = '<p style="color: rgba(255,255,255,0.6)">Релизы пока не найдены</p>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            releases.forEach(r => {
+                const sizeGB = r.size ? (r.size / 1024 / 1024 / 1024).toFixed(2) : 'N/A';
+                html += `
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                        <div style="font-weight: 500; margin-bottom: 8px;">${r.title || 'N/A'}</div>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.6); display: flex; gap: 15px; flex-wrap: wrap;">
+                            <span>📺 ${r.quality || 'N/A'}</span>
+                            <span>💾 ${sizeGB} GB</span>
+                            <span>🌱 ${r.seeders || 0}</span>
+                            <span>🔗 ${r.tracker || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('releasesList').innerHTML = html;
+        }
+        
+        function closeReleasesModal() {
+            document.getElementById('releasesModal').classList.remove('active');
+        }
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
