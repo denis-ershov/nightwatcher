@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NightWatcher</title>
+</head>
+<body>
+<h1>🌙 NightWatcher</h1>
+<form method="post" action="/add">
+<input name="imdb_id" placeholder="tt1234567" required>
+<input name="title" placeholder="Title">
+<button>Add</button>
+</form>
+<ul>
+{% for i in items %}
+<li>{{ i.imdb_id }} — {{ i.title }}</li>
+{% endfor %}
+</ul>
+</body>
+</html>
