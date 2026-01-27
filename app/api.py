@@ -8,7 +8,7 @@ from sqlalchemy import text
 from datetime import datetime
 from app.db import SessionLocal
 from app.config import ADMIN_PASSWORD, SESSION_SECRET
-from app.omdb import fetch_movie_info
+from app.metadata import fetch_metadata
 
 app = FastAPI(title="NightWatcher")
 app.add_middleware(
@@ -97,7 +97,7 @@ async def add(request: Request, imdb_id: str = Form(...)):
     if not imdb_id.startswith("tt"):
         imdb_id = "tt" + imdb_id
     
-    movie_info = await fetch_movie_info(imdb_id)
+    movie_info = await fetch_metadata(imdb_id)
     
     db = SessionLocal()
     try:
@@ -179,7 +179,7 @@ async def refresh_item(request: Request, item_id: int):
     result = db.execute(text("SELECT imdb_id FROM imdb_watchlist WHERE id = :id"), {"id": item_id}).fetchone()
     if result:
         imdb_id = result[0]
-        movie_info = await fetch_movie_info(imdb_id)
+        movie_info = await fetch_metadata(imdb_id)
         if movie_info:
             db.execute(
                 text("""

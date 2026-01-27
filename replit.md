@@ -49,13 +49,18 @@ uvicorn app.api:app --host 0.0.0.0 --port 5000
 
 Required secrets (configure in Secrets tab):
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
-- `ADMIN_PASSWORD` - Password for web interface login (default: admin123)
-- `SESSION_SECRET` - Session encryption key (auto-configured)
-- `OMDB_API_KEY` - OMDB API key for movie metadata (get from omdbapi.com)
+- `ADMIN_PASSWORD` - Password for web interface login (required)
+- `SESSION_SECRET` - Session encryption key (required)
+- `TMDB_API_KEY` - TMDB API key for movie metadata (get from themoviedb.org)
 - `PROWLARR_URL` - Prowlarr API URL
 - `PROWLARR_API_KEY` - Prowlarr API key
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token
 - `TELEGRAM_CHAT_ID` - Telegram chat ID for notifications
+
+## Metadata Sources
+
+- **TV Shows**: TVMaze API (api.tvmaze.com) - no API key required
+- **Movies**: TMDB API (api.themoviedb.org) - requires TMDB_API_KEY
 
 ## API Endpoints
 
