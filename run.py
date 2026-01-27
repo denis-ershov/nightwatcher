@@ -13,8 +13,9 @@ def run_api():
     import uvicorn
     from app.api import app
     
-    print("🚀 Запуск API сервера на http://127.0.0.1:8000")
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    print("🚀 Запуск API сервера на http://0.0.0.0:8000")
+    print("   Доступен извне по IP сервера: http://<SERVER_IP>:8000")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
 
 async def run_watcher_loop():
     """Запуск Watcher в цикле"""

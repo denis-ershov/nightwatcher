@@ -114,8 +114,25 @@ sudo journalctl -u nightwatcher -f
 ## 4. Проверка работы
 
 После запуска откройте в браузере:
-- **API сервер:** http://localhost:8000
+- **API сервер (локально):** http://localhost:8000
+- **API сервер (извне):** http://<SERVER_IP>:8000 (где <SERVER_IP> - IP адрес вашего сервера)
 - **Watcher:** работает в фоне, проверяет релизы каждые 30 минут
+
+### Настройка Firewall (если нужно)
+
+Если сервер недоступен извне, откройте порт 8000:
+
+```bash
+# UFW (Ubuntu)
+sudo ufw allow 8000/tcp
+
+# firewalld (CentOS/RHEL)
+sudo firewall-cmd --permanent --add-port=8000/tcp
+sudo firewall-cmd --reload
+
+# iptables (универсальный)
+sudo iptables -A INPUT -p tcp --dport 8000 -j ACCEPT
+```
 
 ## 5. Остановка
 

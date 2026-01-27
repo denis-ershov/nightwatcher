@@ -4,9 +4,9 @@
 install:
 	pip install -r requirements.txt
 
-# Запуск только API сервера
+# Запуск только API сервера (доступен извне)
 run-api:
-	python -m uvicorn app.api:app --host 127.0.0.1 --port 8000 --reload
+	python -m uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
 
 # Запуск только Watcher
 run-watcher:
