@@ -24,3 +24,6 @@ starlette-session>=0.4.0
 # Legacy (можно удалить после полного перехода)
 requests>=2.31.0
 psycopg2-binary>=2.9.0
+
+# Torrent parsing
+bencode.py>=4.0.0

@@ -5,7 +5,7 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -46,6 +46,42 @@ templates = Jinja2Templates(directory="app/templates")
 
 os.makedirs("app/static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Favicon routes (для обратной совместимости с корневыми путями)
+@app.get("/favicon.ico")
+async def favicon_ico():
+    """Favicon ICO"""
+    return FileResponse("app/static/favicon.ico")
+
+@app.get("/favicon.svg")
+async def favicon_svg():
+    """Favicon SVG"""
+    return FileResponse("app/static/favicon.svg")
+
+@app.get("/favicon-96x96.png")
+async def favicon_png():
+    """Favicon PNG"""
+    return FileResponse("app/static/favicon-96x96.png")
+
+@app.get("/apple-touch-icon.png")
+async def apple_touch_icon():
+    """Apple Touch Icon"""
+    return FileResponse("app/static/apple-touch-icon.png")
+
+@app.get("/site.webmanifest")
+async def site_webmanifest():
+    """Web Manifest"""
+    return FileResponse("app/static/site.webmanifest")
+
+@app.get("/web-app-manifest-192x192.png")
+async def web_app_manifest_192():
+    """Web App Manifest Icon 192x192"""
+    return FileResponse("app/static/web-app-manifest-192x192.png")
+
+@app.get("/web-app-manifest-512x512.png")
+async def web_app_manifest_512():
+    """Web App Manifest Icon 512x512"""
+    return FileResponse("app/static/web-app-manifest-512x512.png")
 
 def require_auth(request: Request):
     """Проверка аутентификации"""

@@ -5,13 +5,66 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import AsyncSessionLocal
-from app.prowlarr_client import search_by_query, search_by_imdb, get_download_link
+from app.prowlarr_client import search_by_query, search_by_imdb, get_download_link, get_client
 from app.notifier import send_message, format_new_release_notification
 from app.season_parser import extract_season_from_title
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 import asyncio
 import re
+import hashlib
+import bencode
+import urllib.parse
+
+async def torrent_to_magnet(torrent_url: str) -> Optional[str]:
+    """
+    Скачать torrent файл по URL и конвертировать его в magnet-ссылку.
+    
+    Args:
+        torrent_url: URL для скачивания torrent файла
+    
+    Returns:
+        Magnet-ссылка или None в случае ошибки
+    """
+    try:
+        client = await get_client()
+        # Скачиваем torrent файл
+        response = await client.get(torrent_url)
+        response.raise_for_status()
+        
+        # Парсим torrent файл
+        torrent_data = bencode.bdecode(response.content)
+        
+        # Извлекаем секцию "info" и вычисляем SHA1 хеш
+        info = torrent_data.get(b'info')
+        if not info:
+            return None
+        
+        # Кодируем секцию info обратно в bencode и вычисляем SHA1
+        info_encoded = bencode.bencode(info)
+        info_hash = hashlib.sha1(info_encoded).digest()
+        
+        # Конвертируем в hex строку (40 символов)
+        info_hash_hex = info_hash.hex()
+        
+        # Формируем magnet-ссылку
+        magnet_url = f"magnet:?xt=urn:btih:{info_hash_hex}"
+        
+        # Опционально добавляем имя файла/торрента, если оно есть
+        if b'name' in info:
+            name = info[b'name']
+            if isinstance(name, bytes):
+                try:
+                    name_str = name.decode('utf-8')
+                    magnet_url += f"&dn={urllib.parse.quote(name_str)}"
+                except UnicodeDecodeError:
+                    pass
+        
+        return magnet_url
+        
+    except Exception:
+        # Тихая ошибка - возвращаем None
+        return None
 
 async def process_item(
     db: AsyncSession,
@@ -75,8 +128,26 @@ async def process_item(
     # Сначала пытаемся искать по IMDb ID (более точный поиск)
     results = []
     try:
-        results = await search_by_imdb(imdb_id)
-        if not results:
+        imdb_results = await search_by_imdb(imdb_id)
+        
+        # Проверяем, действительно ли результаты соответствуют IMDb ID
+        # Если индексер не поддерживает IMDb ID, все результаты будут иметь imdbId: 0
+        # или не совпадать с запрашиваемым IMDb ID
+        if imdb_results:
+            # Проверяем, есть ли хотя бы один результат с правильным IMDb ID
+            has_valid_imdb_match = any(
+                str(r.get("imdbId", "")).lower().strip() == imdb_id.lower().strip() 
+                for r in imdb_results
+            )
+            
+            if has_valid_imdb_match:
+                # Есть результаты с правильным IMDb ID - используем их
+                results = imdb_results
+            else:
+                # Все результаты имеют imdbId: 0 или не совпадают - индексер не поддерживает IMDb ID
+                print(f"Indexer doesn't support IMDb ID search (all results have imdbId: 0), trying search by query: {search_query}")
+                results = await search_by_query(search_query)
+        else:
             # Если поиск по IMDb не дал результатов, ищем по названию
             print(f"No results by IMDb {imdb_id}, trying search by query: {search_query}")
             results = await search_by_query(search_query)
@@ -192,12 +263,17 @@ async def process_item(
                 elif "t=" in guid_str:
                     tracker_id = guid_str.split("t=")[1].split("&")[0].split("#")[0]
         
+        # Используем downloadUrl из ответа Prowlarr, если он есть (это уже готовая ссылка)
+        download_url_from_api = r.get("downloadUrl")
+        if download_url_from_api and download_url_from_api.startswith("http"):
+            # Если downloadUrl уже есть в ответе, используем его (приоритет над формированием вручную)
+            download_url = download_url_from_api
+        
         # Формируем magnet-link из различных источников
         magnet_url = (
             r.get("magnetUrl") or 
             r.get("magnet") or 
-            r.get("magnetLink") or
-            r.get("downloadUrl")  # Некоторые трекеры возвращают magnet в downloadUrl
+            r.get("magnetLink")
         )
         
         # Проверяем, является ли downloadUrl magnet-ссылкой
@@ -246,6 +322,17 @@ async def process_item(
                 except Exception:
                     # Тихая ошибка - просто продолжаем без magnet
                     pass
+        
+        # Если magnet-ссылка все еще не найдена, но есть downloadUrl (torrent файл), конвертируем его в magnet
+        if not magnet_url and download_url and download_url.startswith("http"):
+            try:
+                # Пытаемся конвертировать torrent файл в magnet-ссылку
+                converted_magnet = await torrent_to_magnet(download_url)
+                if converted_magnet:
+                    magnet_url = converted_magnet
+            except Exception:
+                # Тихая ошибка - просто продолжаем без magnet
+                pass
         
         release_data = {
             "title": r.get("title"),
@@ -422,11 +509,21 @@ def filter_results_by_imdb_or_title(
     title_lower = (title or "").lower().strip()
     original_title_lower = (original_title or "").lower().strip()
     
+    # Слова, которые не должны использоваться как ключевые (слишком общие)
+    common_words = {
+        'the', 'a', 'an', 'и', 'в', 'на', 'с', 'для', 'of', 'to', 'in', 'on', 'at',
+        'rip', 'web', 'bd', 'dvd', 'hd', 'uhd', '4k', '1080p', '720p', '2160p',
+        'h264', 'h265', 'hevc', 'x264', 'x265', 'av1', 'raw', 'rus', 'eng', 'multi',
+        'season', 'seasons', 'episode', 'episodes', 'сезон', 'сезоны', 'эп', 'эпизод',
+        'movie', 'tv', 'ova', 'mv', 'фильм', 'сериал', 'webrip', 'web-dl', 'bdrip',
+        'remux', 'bluray', 'blu-ray', 'dvdrip', 'uhdtv', 'uhd', 'sdr', 'hdr', 'hdr10',
+        'dolby', 'vision', 'profile', 'bit', '10-bit', '8-bit'
+    }
+    
     # Нормализуем названия - убираем лишние символы и слова
     def normalize_title(t: str) -> str:
-        # Убираем артикли и служебные слова
-        stop_words = {'the', 'a', 'an', 'и', 'в', 'на', 'с', 'для'}
-        words = [w for w in t.split() if w.lower() not in stop_words and len(w) > 1]
+        # Убираем артикли, служебные слова и технические термины
+        words = [w for w in t.split() if w.lower() not in common_words and len(w) > 1]
         return ' '.join(words)
     
     normalized_title = normalize_title(title_lower) if title_lower else ""
@@ -441,13 +538,19 @@ def filter_results_by_imdb_or_title(
     if not all_keywords:
         return results
     
+    # Для коротких названий (1-2 слова) требуем более строгое совпадение
+    is_short_title = len(all_keywords) <= 2
+    
     for r in results:
         release_title = (r.get("title") or "").lower()
         release_imdb = r.get("imdbId") or r.get("imdb_id") or ""
         
         # Проверка по IMDb ID (наиболее точная)
         if release_imdb and imdb_id:
-            if release_imdb.lower().strip() == imdb_id.lower().strip():
+            release_imdb_str = str(release_imdb).strip()
+            imdb_id_str = str(imdb_id).strip()
+            # Проверяем, что imdbId не равен 0 и совпадает с запрашиваемым
+            if release_imdb_str and release_imdb_str != "0" and release_imdb_str.lower() == imdb_id_str.lower():
                 filtered.append(r)
                 continue
         
@@ -457,15 +560,18 @@ def filter_results_by_imdb_or_title(
         # Подсчитываем совпадения ключевых слов
         matches = sum(1 for word in all_keywords if word in release_normalized)
         
-        # Проверяем совпадение по основным словам
-        # Если совпадает хотя бы 50% ключевых слов или есть совпадение длинных слов (>=5 символов)
-        min_matches = max(2, len(all_keywords) // 2)  # Минимум 2 или половина ключевых слов
-        long_word_match = any(len(word) >= 5 and word in release_normalized for word in all_keywords)
-        
-        if matches >= min_matches or long_word_match:
-            filtered.append(r)
+        # Для коротких названий требуем совпадение всех или почти всех ключевых слов
+        if is_short_title:
+            # Для коротких названий (например, "The Rip") требуем совпадение всех ключевых слов
+            if matches >= len(all_keywords):
+                filtered.append(r)
         else:
-            print(f"Filtered out release (no match): '{r.get('title')}' (searching for: {title or original_title}, matches: {matches}/{len(all_keywords)})")
+            # Для длинных названий требуем совпадение хотя бы 50% ключевых слов или длинных слов (>=5 символов)
+            min_matches = max(2, len(all_keywords) // 2)  # Минимум 2 или половина ключевых слов
+            long_word_match = any(len(word) >= 5 and word in release_normalized for word in all_keywords)
+            
+            if matches >= min_matches or long_word_match:
+                filtered.append(r)
     
     return filtered
 
