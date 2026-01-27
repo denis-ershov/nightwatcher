@@ -1,0 +1,15 @@
+[Unit]
+Description=NightWatcher - API and Watcher Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/nightwatcher
+Environment="PATH=/path/to/nightwatcher/venv/bin"
+ExecStart=/path/to/nightwatcher/venv/bin/python run.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

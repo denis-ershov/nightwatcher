@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nightwatcher:
+    build: .
+    container_name: nightwatcher
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - PROWLARR_URL=${PROWLARR_URL}
+      - PROWLARR_API_KEY=${PROWLARR_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    volumes:
+      - ./app:/app/app
+      - ./migrations:/app/migrations
+    restart: unless-stopped
+    command: python run.py

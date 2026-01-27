@@ -21,31 +21,17 @@ from app.season_parser import extract_season_from_title, clean_title_from_season
 import re
 
 # Lifecycle events для управления ресурсами
-# На serverless (Vercel) lifespan events могут не работать, поэтому делаем их опциональными
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Startup
     yield
     # Shutdown - закрываем все соединения
-    try:
-        await close_db()
-        await close_client()
-        await close_bot()
-    except Exception:
-        # Игнорируем ошибки при закрытии на serverless
-        pass
+    await close_db()
+    await close_client()
+    await close_bot()
 
-# Проверяем, запущено ли на Vercel (serverless)
-import os
-is_vercel = os.environ.get("VERCEL") == "1"
-
-if is_vercel:
-    # На Vercel не используем lifespan events
-    app = FastAPI(title="NightWatcher")
-else:
-    # В обычном режиме используем lifespan events
-    app = FastAPI(title="NightWatcher", lifespan=lifespan)
+app = FastAPI(title="NightWatcher", lifespan=lifespan)
 
 app.add_middleware(
     SessionMiddleware, 
@@ -57,9 +43,9 @@ app.add_middleware(
 )
 
 # Пути к шаблонам и статическим файлам
-# На Vercel пути должны быть относительными от корня проекта
-template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "templates")
-static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "static")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+template_dir = os.path.join(BASE_DIR, "app", "templates")
+static_dir = os.path.join(BASE_DIR, "app", "static")
 
 templates = Jinja2Templates(directory=template_dir)
 
