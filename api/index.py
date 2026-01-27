@@ -10,5 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.api import app
 
+runtime = "python3.13"
+
 # Экспортируем app для Vercel
 __all__ = ["app"]
