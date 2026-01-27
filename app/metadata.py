@@ -33,6 +33,7 @@ async def fetch_from_tvmaze(imdb_id: str) -> dict | None:
             
             return {
                 "title": data.get("name"),
+                "original_title": data.get("name"),  # TVMaze обычно возвращает оригинальное название в "name"
                 "year": year,
                 "genre": ", ".join(genres) if genres else None,
                 "plot": summary,

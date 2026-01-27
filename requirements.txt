@@ -1,11 +1,26 @@
-requests
-sqlalchemy
-psycopg2-binary
-python-dotenv
-fastapi
-uvicorn
-jinja2
-python-multipart
-httpx
-itsdangerous
-starlette-session
+# Core
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.6
+
+# Database (async)
+sqlalchemy[asyncio]>=2.0.0
+asyncpg>=0.29.0
+
+# HTTP clients (async)
+httpx>=0.25.0
+
+# Telegram
+aiogram==3.24.0
+
+# Templates
+jinja2>=3.1.0
+
+# Sessions
+itsdangerous>=2.1.0
+starlette-session>=0.4.0
+
+# Legacy (можно удалить после полного перехода)
+requests>=2.31.0
+psycopg2-binary>=2.9.0

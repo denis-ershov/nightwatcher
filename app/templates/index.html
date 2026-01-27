@@ -186,20 +186,31 @@
             opacity: 0.5;
         }
         
+        .item-poster-container {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
         .item-poster {
             width: 100%;
-            height: 300px;
-            object-fit: cover;
-            background: rgba(255, 255, 255, 0.05);
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            display: block;
         }
         
         .item-poster-placeholder {
             width: 100%;
-            height: 300px;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.05);
             font-size: 80px;
         }
         
@@ -218,6 +229,14 @@
             font-size: 18px;
             font-weight: 600;
             line-height: 1.3;
+        }
+        
+        .item-original-title {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+            margin-top: 4px;
+            font-style: italic;
         }
         
         .item-type {
@@ -395,6 +414,16 @@
             font-size: 15px;
         }
         
+        .form-group input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            margin: 0;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2e55d5;
+        }
+        
         .form-group select option {
             background: #1a1a2e;
         }
@@ -446,8 +475,9 @@
                 grid-template-columns: 1fr;
             }
             
-            .item-poster, .item-poster-placeholder {
-                height: 250px;
+            .item-poster-container {
+                aspect-ratio: 2 / 3;
+                min-height: 300px;
             }
         }
     </style>
@@ -472,26 +502,36 @@
         <div class="add-form">
             <h2>➕ Добавить в отслеживание</h2>
             <form method="post" action="/add" class="form-row">
-                <input type="text" name="imdb_id" placeholder="IMDb ID (например: tt0111161)" required>
+                <input type="text" name="imdb_id" placeholder="IMDb ID (например: tt0111161 или tt4574334 Stranger Things 4 сезон)" required>
                 <button type="submit" class="btn btn-primary">Добавить</button>
             </form>
+            <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 10px; display: block;">
+                💡 Для сериалов можно указать сезон в названии (например: "tt4574334 Stranger Things 4 сезон")
+            </small>
         </div>
         
         {% if items %}
         <div class="items-grid">
             {% for item in items %}
             <div class="item-card {% if not item.enabled %}disabled{% endif %}" data-id="{{ item.id }}">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="item-poster">
-                {% else %}
-                <div class="item-poster-placeholder">
-                    {% if item.type == 'tv' %}📺{% else %}🎬{% endif %}
+                <div class="item-poster-container">
+                    {% if item.poster_url %}
+                    <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="item-poster">
+                    {% else %}
+                    <div class="item-poster-placeholder">
+                        {% if item.type == 'tv' %}📺{% else %}🎬{% endif %}
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
                 
                 <div class="item-content">
                     <div class="item-header">
-                        <div class="item-title">{{ item.title or item.imdb_id }}</div>
+                        <div>
+                            <div class="item-title">{{ item.title or item.imdb_id }}</div>
+                            {% if item.original_title and item.original_title != item.title %}
+                            <div class="item-original-title">{{ item.original_title }}</div>
+                            {% endif %}
+                        </div>
                         <span class="item-type {{ item.type }}">{{ item.type }}</span>
                     </div>
                     
@@ -505,8 +545,18 @@
                         {% if item.runtime %}
                         <span>⏱️ {{ item.runtime }}</span>
                         {% endif %}
-                        {% if item.total_seasons %}
-                        <span>📺 {{ item.total_seasons }} сезонов</span>
+                        {% if item.type == 'tv' %}
+                            {% if item.target_season %}
+                            <span>🎯 Сезон {{ item.target_season }}</span>
+                            {% elif item.total_seasons %}
+                            <span>📺 {{ item.total_seasons }} сезонов</span>
+                            {% endif %}
+                        {% endif %}
+                        {% if item.preferred_quality %}
+                        <span>📺 Качество: {{ item.preferred_quality.replace(',', ', ') }}</span>
+                        {% endif %}
+                        {% if item.preferred_audio %}
+                        <span>🎙 Озвучка: {{ item.preferred_audio }}</span>
                         {% endif %}
                     </div>
                     
@@ -530,7 +580,7 @@
                         <button class="btn btn-secondary" onclick="toggleItem({{ item.id }})">
                             {% if item.enabled %}⏸️ Пауза{% else %}▶️ Включить{% endif %}
                         </button>
-                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title }}', '{{ item.type }}')">
+                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title }}', '{{ item.type }}', {{ item.target_season if item.target_season else 'null' }}, '{{ item.preferred_quality or '' }}', '{{ item.preferred_audio or '' }}')">
                             ✏️ Изменить
                         </button>
                         <button class="btn btn-secondary" onclick="refreshItem({{ item.id }})">
@@ -566,6 +616,9 @@
                 <div class="form-group">
                     <label for="editTitle">Название</label>
                     <input type="text" id="editTitle" name="title" required>
+                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                        Можно указать сезон в названии (например: "Stranger Things 4 сезон")
+                    </small>
                 </div>
                 <div class="form-group">
                     <label for="editType">Тип</label>
@@ -573,6 +626,50 @@
                         <option value="movie">Фильм</option>
                         <option value="tv">Сериал</option>
                     </select>
+                </div>
+                <div class="form-group" id="seasonGroup" style="display: none;">
+                    <label for="editSeason">Сезон для отслеживания (опционально)</label>
+                    <input type="number" id="editSeason" name="target_season" min="1" max="100" placeholder="Оставьте пустым для всех сезонов">
+                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                        Если указан, поиск будет выполняться только для этого сезона
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Предпочтительное качество (можно выбрать несколько)</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" value="1080p" class="quality-checkbox">
+                            <span>1080p (Full HD)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" value="2160p" class="quality-checkbox">
+                            <span>2160p (4K/UHD)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" value="720p" class="quality-checkbox">
+                            <span>720p (HD)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" value="480p" class="quality-checkbox">
+                            <span>480p (SD)</span>
+                        </label>
+                    </div>
+                    <input type="hidden" id="editQuality" name="preferred_quality" value="">
+                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                        Будут показываться релизы с любым из выбранных качеств
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="editAudio">Предпочтительная озвучка (опционально)</label>
+                    <select id="editAudio" name="preferred_audio">
+                        <option value="">Любая озвучка</option>
+                        <option value="русская">Русская озвучка</option>
+                        <option value="оригинал">Оригинал (английский)</option>
+                        <option value="dub">DUB (дубляж)</option>
+                    </select>
+                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                        Будут показываться только релизы с указанной озвучкой
+                    </small>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Сохранить</button>
             </form>
@@ -639,12 +736,70 @@
             }
         }
         
-        function openEditModal(id, title, type) {
+        function openEditModal(id, title, type, targetSeason, preferredQuality, preferredAudio) {
             document.getElementById('editForm').action = `/edit/${id}`;
             document.getElementById('editTitle').value = title;
             document.getElementById('editType').value = type;
+            document.getElementById('editSeason').value = targetSeason || '';
+            document.getElementById('editAudio').value = preferredAudio || '';
+            
+            // Обрабатываем множественный выбор качества
+            const qualityCheckboxes = document.querySelectorAll('.quality-checkbox');
+            qualityCheckboxes.forEach(cb => cb.checked = false);
+            
+            if (preferredQuality) {
+                // Разбиваем строку на отдельные качества (поддерживаем запятую как разделитель)
+                const qualities = preferredQuality.split(',').map(q => q.trim());
+                qualityCheckboxes.forEach(cb => {
+                    if (qualities.includes(cb.value)) {
+                        cb.checked = true;
+                    }
+                });
+            }
+            
+            // Обновляем скрытое поле при изменении чекбоксов
+            updateQualityHiddenField();
+            
+            // Показываем/скрываем поле сезона в зависимости от типа
+            const seasonGroup = document.getElementById('seasonGroup');
+            if (type === 'tv') {
+                seasonGroup.style.display = 'block';
+            } else {
+                seasonGroup.style.display = 'none';
+            }
+            
             document.getElementById('editModal').classList.add('active');
         }
+        
+        // Функция для обновления скрытого поля с выбранными качествами
+        function updateQualityHiddenField() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.quality-checkbox:checked'))
+                .map(cb => cb.value);
+            document.getElementById('editQuality').value = checkedBoxes.join(',');
+        }
+        
+        // Добавляем обработчики событий для чекбоксов качества
+        document.addEventListener('DOMContentLoaded', function() {
+            const qualityCheckboxes = document.querySelectorAll('.quality-checkbox');
+            qualityCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateQualityHiddenField);
+            });
+        });
+        
+        // Обновляем видимость поля сезона при изменении типа
+        document.getElementById('editType')?.addEventListener('change', function() {
+            const seasonGroup = document.getElementById('seasonGroup');
+            if (this.value === 'tv') {
+                seasonGroup.style.display = 'block';
+            } else {
+                seasonGroup.style.display = 'none';
+            }
+        });
+        
+        // Обновляем скрытое поле перед отправкой формы
+        document.getElementById('editForm')?.addEventListener('submit', function() {
+            updateQualityHiddenField();
+        });
         
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('active');
