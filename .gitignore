@@ -121,3 +121,6 @@ celerybeat.pid
 *.bak
 *.swp
 *~
+
+# Archive
+*.zip
