@@ -21,17 +21,31 @@ from app.season_parser import extract_season_from_title, clean_title_from_season
 import re
 
 # Lifecycle events для управления ресурсами
+# На serverless (Vercel) lifespan events могут не работать, поэтому делаем их опциональными
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Startup
     yield
     # Shutdown - закрываем все соединения
-    await close_db()
-    await close_client()
-    await close_bot()
+    try:
+        await close_db()
+        await close_client()
+        await close_bot()
+    except Exception:
+        # Игнорируем ошибки при закрытии на serverless
+        pass
 
-app = FastAPI(title="NightWatcher", lifespan=lifespan)
+# Проверяем, запущено ли на Vercel (serverless)
+import os
+is_vercel = os.environ.get("VERCEL") == "1"
+
+if is_vercel:
+    # На Vercel не используем lifespan events
+    app = FastAPI(title="NightWatcher")
+else:
+    # В обычном режиме используем lifespan events
+    app = FastAPI(title="NightWatcher", lifespan=lifespan)
 
 app.add_middleware(
     SessionMiddleware, 
@@ -42,46 +56,51 @@ app.add_middleware(
     https_only=False
 )
 
-templates = Jinja2Templates(directory="app/templates")
+# Пути к шаблонам и статическим файлам
+# На Vercel пути должны быть относительными от корня проекта
+template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "templates")
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "static")
 
-os.makedirs("app/static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory=template_dir)
+
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Favicon routes (для обратной совместимости с корневыми путями)
 @app.get("/favicon.ico")
 async def favicon_ico():
     """Favicon ICO"""
-    return FileResponse("app/static/favicon.ico")
+    return FileResponse(os.path.join(static_dir, "favicon.ico"))
 
 @app.get("/favicon.svg")
 async def favicon_svg():
     """Favicon SVG"""
-    return FileResponse("app/static/favicon.svg")
+    return FileResponse(os.path.join(static_dir, "favicon.svg"))
 
 @app.get("/favicon-96x96.png")
 async def favicon_png():
     """Favicon PNG"""
-    return FileResponse("app/static/favicon-96x96.png")
+    return FileResponse(os.path.join(static_dir, "favicon-96x96.png"))
 
 @app.get("/apple-touch-icon.png")
 async def apple_touch_icon():
     """Apple Touch Icon"""
-    return FileResponse("app/static/apple-touch-icon.png")
+    return FileResponse(os.path.join(static_dir, "apple-touch-icon.png"))
 
 @app.get("/site.webmanifest")
 async def site_webmanifest():
     """Web Manifest"""
-    return FileResponse("app/static/site.webmanifest")
+    return FileResponse(os.path.join(static_dir, "site.webmanifest"))
 
 @app.get("/web-app-manifest-192x192.png")
 async def web_app_manifest_192():
     """Web App Manifest Icon 192x192"""
-    return FileResponse("app/static/web-app-manifest-192x192.png")
+    return FileResponse(os.path.join(static_dir, "web-app-manifest-192x192.png"))
 
 @app.get("/web-app-manifest-512x512.png")
 async def web_app_manifest_512():
     """Web App Manifest Icon 512x512"""
-    return FileResponse("app/static/web-app-manifest-512x512.png")
+    return FileResponse(os.path.join(static_dir, "web-app-manifest-512x512.png"))
 
 def require_auth(request: Request):
     """Проверка аутентификации"""

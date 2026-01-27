@@ -1,0 +1,20 @@
+# Исключаем файлы, которые не нужны для deployment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.env.local
+.env.*.local
+*.log
+.DS_Store
+run_server.bat
+run_watcher.bat
+check_connections.py
+run_watcher.py
