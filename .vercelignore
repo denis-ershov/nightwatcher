@@ -1,7 +1,5 @@
 # Исключаем файлы, которые не нужны для deployment
 venv/
-env/
-ENV/
 __pycache__/
 *.pyc
 *.pyo
@@ -20,10 +18,3 @@ run_server.bat
 run_watcher.bat
 check_connections.py
 run_watcher.py
-tests/
-.pytest_cache/
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
