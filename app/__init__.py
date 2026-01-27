@@ -1,0 +1,3 @@
+"""
+NightWatcher application package.
+"""
