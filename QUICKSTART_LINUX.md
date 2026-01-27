@@ -75,17 +75,29 @@ chmod +x start_background.sh
 
 ### Вариант C: Через systemd (рекомендуется для production)
 
+**Автоматическая установка:**
+```bash
+# Делаем скрипт исполняемым
+chmod +x install_service.sh
+
+# Устанавливаем service (требует sudo)
+sudo bash install_service.sh
+
+# Запускаем
+sudo systemctl start nightwatcher
+
+# Проверка статуса
+sudo systemctl status nightwatcher
+```
+
+**Ручная установка:**
 ```bash
 # Копируем сервисный файл
 sudo cp systemd-nightwatcher.service /etc/systemd/system/nightwatcher.service
 
-# Редактируем пути (укажите правильный путь к проекту)
+# Пути уже настроены для /home/nightwatcher/
+# Если нужно изменить пользователя, отредактируйте файл:
 sudo nano /etc/systemd/system/nightwatcher.service
-
-# Измените:
-# - WorkingDirectory=/path/to/nightwatcher
-# - ExecStart=/path/to/nightwatcher/venv/bin/python run.py
-# - User=your_user (не root!)
 
 # Включаем автозапуск
 sudo systemctl daemon-reload

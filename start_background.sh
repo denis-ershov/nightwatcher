@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Скрипт запуска NightWatcher в фоновом режиме на Linux
 # Использование: ./start_background.sh [start|stop|status|restart]

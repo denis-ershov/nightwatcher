@@ -1,15 +1,27 @@
 [Unit]
 Description=NightWatcher - API and Watcher Service
+Documentation=https://github.com/denis-ershov/nightwatcher
 After=network.target postgresql.service
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=www-data
-WorkingDirectory=/path/to/nightwatcher
-Environment="PATH=/path/to/nightwatcher/venv/bin"
-ExecStart=/path/to/nightwatcher/venv/bin/python run.py
+User=root
+Group=root
+WorkingDirectory=/home/nightwatcher
+Environment="PATH=/home/nightwatcher/venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/home/nightwatcher/.env
+ExecStart=/home/nightwatcher/venv/bin/python /home/nightwatcher/run.py
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nightwatcher
+
+# Ограничения ресурсов (опционально)
+# LimitNOFILE=65536
+# MemoryLimit=512M
+# CPUQuota=50%
 
 [Install]
 WantedBy=multi-user.target

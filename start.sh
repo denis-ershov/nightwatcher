@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Скрипт запуска NightWatcher на Linux
 # Использование: ./start.sh
