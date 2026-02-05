@@ -6,9 +6,17 @@ from aiogram import Bot
 from aiogram.types import BufferedInputFile, URLInputFile
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 from app.config import TG_TOKEN, TG_CHAT_ID
+from app.logger import get_logger
+from app.retry import retry
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db import AsyncSessionLocal
 import httpx
 from typing import Optional
 import asyncio
+from datetime import datetime
+
+logger = get_logger(__name__)
 
 # Глобальный экземпляр бота
 _bot: Bot | None = None
@@ -30,7 +38,8 @@ async def close_bot():
         await _bot.session.close()
         _bot = None
 
-async def send_message(text: str, photo_url: Optional[str] = None, retries: int = 3) -> bool:
+@retry(max_attempts=3, delay=1.0, backoff=2.0, exceptions=(TelegramNetworkError,))
+async def send_message(text: str, photo_url: Optional[str] = None, retries: int = 3, imdb_id: Optional[str] = None) -> bool:
     """
     Отправить сообщение в Telegram через aiogram.
     
@@ -43,7 +52,7 @@ async def send_message(text: str, photo_url: Optional[str] = None, retries: int 
         True если сообщение отправлено успешно, False иначе
     """
     if not TG_TOKEN or not TG_CHAT_ID:
-        print(f"Telegram not configured. Message: {text[:100]}...")
+        logger.warning(f"Telegram not configured. Message: {text[:100]}...")
         return False
     
     bot = get_bot()
@@ -90,10 +99,10 @@ async def send_message(text: str, photo_url: Optional[str] = None, retries: int 
                     # Если не удалось отправить с фото, отправляем только текст
                     error_msg = str(e)
                     if "chat not found" in error_msg.lower():
-                        print(f"❌ Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
-                        print(f"   Make sure the bot has been started and you've sent a message to it first.")
+                        logger.error(f"Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
+                        logger.error("Make sure the bot has been started and you've sent a message to it first.")
                         return False
-                    print(f"⚠️ Failed to send photo, trying text only: {error_msg}")
+                    logger.warning(f"Failed to send photo, trying text only: {error_msg}")
                     try:
                         await bot.send_message(
                             chat_id=chat_id,
@@ -103,7 +112,7 @@ async def send_message(text: str, photo_url: Optional[str] = None, retries: int 
                         )
                     except TelegramBadRequest as e2:
                         if "chat not found" in str(e2).lower():
-                            print(f"❌ Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
+                            logger.error(f"Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
                             return False
                         raise
             else:
@@ -115,24 +124,39 @@ async def send_message(text: str, photo_url: Optional[str] = None, retries: int 
                     disable_web_page_preview=False
                 )
             
+            # Сохраняем в историю уведомлений
+            if imdb_id:
+                try:
+                    async with AsyncSessionLocal() as db:
+                        await db.execute(
+                            text("""
+                                INSERT INTO notifications_history (imdb_id, notification_text, sent_at, success)
+                                VALUES (:imdb_id, :text, NOW(), TRUE)
+                            """),
+                            {"imdb_id": imdb_id, "text": text[:1000]}  # Ограничиваем длину
+                        )
+                        await db.commit()
+                except Exception as e:
+                    logger.warning(f"Failed to save notification history: {e}")
+            
             return True
             
         except TelegramBadRequest as e:
             error_msg = str(e)
             if "chat not found" in error_msg.lower():
-                print(f"❌ Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
-                print(f"   Make sure the bot has been started and you've sent a message to it first.")
+                logger.error(f"Telegram error: Chat ID '{chat_id}' not found. Please check TELEGRAM_CHAT_ID in .env file.")
+                logger.error("Make sure the bot has been started and you've sent a message to it first.")
                 return False
-            print(f"❌ Telegram Bad Request: {error_msg}")
+            logger.error(f"Telegram Bad Request: {error_msg}")
             return False
         except TelegramNetworkError as e:
             if attempt < retries - 1:
                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
                 continue
-            print(f"❌ Failed to send Telegram message after {retries} attempts: {e}")
+            logger.error(f"Failed to send Telegram message after {retries} attempts: {e}")
             return False
         except Exception as e:
-            print(f"❌ Unexpected error sending Telegram message: {e}")
+            logger.error(f"Unexpected error sending Telegram message: {e}", exc_info=True)
             return False
     
     return False
@@ -200,3 +224,32 @@ def format_new_release_notification(item: dict, release: dict, change_type: str 
         info += f'\n📥 <a href="{download_url}">Скачать с трекера</a>\n'
     
     return header + info
+
+async def send_error_notification(error_type: str, error_message: str, context: Optional[dict] = None) -> bool:
+    """
+    Отправить уведомление об ошибке в Telegram.
+    
+    Args:
+        error_type: Тип ошибки (например, "Database Error", "API Error", "Watcher Error")
+        error_message: Сообщение об ошибке
+        context: Дополнительный контекст (опционально)
+    
+    Returns:
+        True если сообщение отправлено успешно, False иначе
+    """
+    if not TG_TOKEN or not TG_CHAT_ID:
+        logger.warning(f"Telegram not configured. Error notification skipped: {error_type}")
+        return False
+    
+    error_text = f"🚨 <b>Ошибка NightWatcher</b>\n\n"
+    error_text += f"<b>Тип:</b> {error_type}\n"
+    error_text += f"<b>Сообщение:</b> {error_message}\n"
+    
+    if context:
+        error_text += "\n<b>Контекст:</b>\n"
+        for key, value in context.items():
+            error_text += f"• {key}: {value}\n"
+    
+    error_text += f"\n⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    return await send_message(error_text, imdb_id=None)

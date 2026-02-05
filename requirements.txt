@@ -3,6 +3,8 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.6
+pydantic>=2.0.0
+slowapi>=0.1.9
 
 # Database (async)
 sqlalchemy[asyncio]>=2.0.0

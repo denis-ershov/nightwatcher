@@ -11,6 +11,32 @@
     <link rel="manifest" href="/static/site.webmanifest" />
     <title>NightWatcher</title>
     <style>
+        :root {
+            /* Темная тема (по умолчанию) */
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --bg-secondary: rgba(255, 255, 255, 0.05);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --text-primary: #fff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent: #e94560;
+            --accent-secondary: #2ed573;
+        }
+        
+        [data-theme="light"] {
+            /* Светлая тема */
+            --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-secondary: rgba(255, 255, 255, 0.9);
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: rgba(26, 26, 46, 0.8);
+            --text-muted: rgba(26, 26, 46, 0.6);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent: #e94560;
+            --accent-secondary: #2ed573;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -19,19 +45,20 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
-            color: #fff;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
         }
         
         .header {
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--bg-secondary);
             backdrop-filter: blur(10px);
             padding: 20px;
             position: sticky;
             top: 0;
             z-index: 100;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
         }
         
         .header-content {
@@ -63,6 +90,22 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--bg-secondary);
         }
         
         .btn {
@@ -77,10 +120,11 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            touch-action: manipulation; /* Улучшение для мобильных */
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #e94560, #0f3460);
+            background: linear-gradient(135deg, var(--accent), #0f3460);
             color: #fff;
         }
         
@@ -90,18 +134,18 @@
         }
         
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
         
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--bg-card);
         }
         
         .btn-danger {
             background: rgba(233, 69, 96, 0.2);
-            color: #e94560;
+            color: var(--accent);
             border: 1px solid rgba(233, 69, 96, 0.3);
         }
         
@@ -111,7 +155,7 @@
         
         .btn-success {
             background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
+            color: var(--accent-secondary);
             border: 1px solid rgba(46, 213, 115, 0.3);
         }
         
@@ -125,13 +169,63 @@
             padding: 30px 20px;
         }
         
-        .add-form {
-            background: rgba(255, 255, 255, 0.05);
+        .filters-section {
+            background: var(--bg-card);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 25px;
             margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filters-row input,
+        .filters-row select {
+            padding: 10px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .filters-row input:focus,
+        .filters-row select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .batch-actions {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .batch-actions.active {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .add-form {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
         }
         
         .add-form h2 {
@@ -150,21 +244,21 @@
             flex: 1;
             min-width: 200px;
             padding: 12px 18px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--border-color);
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 15px;
             transition: all 0.3s ease;
         }
         
         .form-row input:focus {
             outline: none;
-            border-color: #e94560;
+            border-color: var(--accent);
         }
         
         .form-row input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: var(--text-muted);
         }
         
         .items-grid {
@@ -174,28 +268,40 @@
         }
         
         .item-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-card);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .item-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(233, 69, 96, 0.3);
+            border-color: var(--accent);
         }
         
         .item-card.disabled {
             opacity: 0.5;
         }
         
+        .item-card input[type="checkbox"] {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            z-index: 10;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+        
         .item-poster-container {
             width: 100%;
             aspect-ratio: 2 / 3;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-secondary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -239,7 +345,7 @@
         
         .item-original-title {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
             font-weight: 400;
             margin-top: 4px;
             font-style: italic;
@@ -256,12 +362,12 @@
         
         .item-type.movie {
             background: rgba(233, 69, 96, 0.2);
-            color: #e94560;
+            color: var(--accent);
         }
         
         .item-type.tv {
             background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
+            color: var(--accent-secondary);
         }
         
         .item-meta {
@@ -270,7 +376,7 @@
             gap: 12px;
             margin-bottom: 12px;
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
         }
         
         .item-meta span {
@@ -279,15 +385,23 @@
             gap: 5px;
         }
         
+        .releases-count {
+            background: rgba(46, 213, 115, 0.2);
+            color: var(--accent-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
         .item-genre {
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
             margin-bottom: 12px;
         }
         
         .item-plot {
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
             line-height: 1.5;
             margin-bottom: 15px;
             display: -webkit-box;
@@ -301,7 +415,7 @@
             gap: 8px;
             flex-wrap: wrap;
             padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--border-color);
         }
         
         .item-footer .btn {
@@ -314,7 +428,7 @@
             align-items: center;
             gap: 8px;
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
+            color: var(--text-muted);
             margin-top: 10px;
         }
         
@@ -325,17 +439,52 @@
         }
         
         .status-dot.active {
-            background: #2ed573;
+            background: var(--accent-secondary);
         }
         
         .status-dot.inactive {
             background: #ff6b6b;
         }
         
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination button {
+            padding: 8px 15px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .current {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-muted);
         }
         
         .empty-state-icon {
@@ -346,7 +495,7 @@
         .empty-state h3 {
             font-size: 24px;
             margin-bottom: 10px;
-            color: #fff;
+            color: var(--text-primary);
         }
         
         .modal {
@@ -368,14 +517,14 @@
         }
         
         .modal-content {
-            background: #1a1a2e;
+            background: var(--bg-card);
             border-radius: 16px;
             padding: 30px;
             max-width: 500px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
         }
         
         .modal-header {
@@ -392,7 +541,7 @@
         .modal-close {
             background: none;
             border: none;
-            color: #fff;
+            color: var(--text-primary);
             font-size: 24px;
             cursor: pointer;
             padding: 5px;
@@ -406,17 +555,17 @@
             display: block;
             margin-bottom: 8px;
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text-secondary);
         }
         
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--border-color);
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 15px;
         }
         
@@ -427,20 +576,21 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #2e55d5;
+            accent-color: var(--accent);
         }
         
         .form-group select option {
-            background: #1a1a2e;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
         
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid var(--border-color);
             border-radius: 50%;
-            border-top-color: #fff;
+            border-top-color: var(--accent);
             animation: spin 1s linear infinite;
         }
         
@@ -460,6 +610,7 @@
             transform: translateY(100px);
             opacity: 0;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .toast.show {
@@ -469,6 +620,32 @@
         
         .toast.error {
             background: rgba(233, 69, 96, 0.9);
+        }
+        
+        .stats-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .stats-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+            color: var(--accent);
+        }
+        
+        .stats-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
         }
         
         @media (max-width: 768px) {
@@ -485,6 +662,35 @@
                 aspect-ratio: 2 / 3;
                 min-height: 300px;
             }
+            
+            .filters-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                min-height: 44px; /* Минимальный размер для touch */
+                min-width: 44px;
+            }
+            
+            .item-footer {
+                flex-direction: column;
+            }
+            
+            .item-footer .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main {
+                padding: 15px 10px;
+            }
+            
+            .add-form,
+            .filters-section {
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -496,22 +702,97 @@
                 <h1>NightWatcher</h1>
             </div>
             <div class="header-actions">
-                <button class="btn btn-success" onclick="runSearch()">
-                    🔍 Запустить поиск
-                </button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Переключить тему">🌓</button>
+                <button class="btn btn-secondary" onclick="showStats()">📊 Статистика</button>
+                <button class="btn btn-secondary" onclick="showExportModal()">📥 Экспорт</button>
+                <button class="btn btn-secondary" onclick="showImportModal()">📤 Импорт</button>
+                <button class="btn btn-success" onclick="runSearch()">🔍 Поиск</button>
+                <a href="/docs" class="btn btn-secondary" target="_blank">📖 API</a>
                 <a href="/logout" class="btn btn-secondary">Выйти</a>
             </div>
         </div>
     </header>
     
     <main class="main">
+        <!-- Статистика -->
+        <div id="statsSection" class="stats-grid" style="display: none;">
+            <div class="stats-card">
+                <h3 id="statTotalItems">-</h3>
+                <p>Всего элементов</p>
+            </div>
+            <div class="stats-card">
+                <h3 id="statActiveItems">-</h3>
+                <p>Активных</p>
+            </div>
+            <div class="stats-card">
+                <h3 id="statTotalReleases">-</h3>
+                <p>Всего релизов</p>
+            </div>
+            <div class="stats-card">
+                <h3 id="statReleases24h">-</h3>
+                <p>За 24 часа</p>
+            </div>
+        </div>
+        
+        <!-- Batch операции -->
+        <div id="batchActions" class="batch-actions">
+            <div>
+                <strong id="selectedCount">0</strong> выбрано
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-success" onclick="batchToggle(true)">▶️ Включить</button>
+                <button class="btn btn-secondary" onclick="batchToggle(false)">⏸️ Выключить</button>
+                <button class="btn btn-danger" onclick="batchDelete()">🗑️ Удалить</button>
+                <button class="btn btn-secondary" onclick="clearSelection()">✖️ Отменить</button>
+            </div>
+        </div>
+        
+        <!-- Фильтры и поиск -->
+        <div class="filters-section">
+            <h2 style="margin-bottom: 15px; font-size: 18px;">🔍 Поиск и фильтры</h2>
+            <form method="get" id="filtersForm">
+                <div class="filters-row">
+                    <input type="text" name="search" placeholder="Поиск по названию или IMDb ID" value="{{ filters.search or '' }}">
+                    <select name="type_filter">
+                        <option value="all" {% if not filters.type_filter or filters.type_filter == 'all' %}selected{% endif %}>Все типы</option>
+                        <option value="movie" {% if filters.type_filter == 'movie' %}selected{% endif %}>Фильмы</option>
+                        <option value="tv" {% if filters.type_filter == 'tv' %}selected{% endif %}>Сериалы</option>
+                    </select>
+                    <select name="enabled_filter">
+                        <option value="">Все статусы</option>
+                        <option value="true" {% if filters.enabled_filter == True %}selected{% endif %}>Активные</option>
+                        <option value="false" {% if filters.enabled_filter == False %}selected{% endif %}>Приостановленные</option>
+                    </select>
+                    <input type="number" name="year_filter" placeholder="Год" value="{{ filters.year_filter or '' }}" min="1900" max="2100">
+                    <select name="sort_by">
+                        <option value="created_at" {% if filters.sort_by == 'created_at' %}selected{% endif %}>По дате добавления</option>
+                        <option value="title" {% if filters.sort_by == 'title' %}selected{% endif %}>По названию</option>
+                        <option value="year" {% if filters.sort_by == 'year' %}selected{% endif %}>По году</option>
+                        <option value="last_checked" {% if filters.sort_by == 'last_checked' %}selected{% endif %}>По последней проверке</option>
+                    </select>
+                    <select name="sort_order">
+                        <option value="desc" {% if filters.sort_order == 'desc' %}selected{% endif %}>По убыванию</option>
+                        <option value="asc" {% if filters.sort_order == 'asc' %}selected{% endif %}>По возрастанию</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">Сбросить</button>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        <span>Выбрать все</span>
+                    </label>
+                </div>
+            </form>
+        </div>
+        
         <div class="add-form">
             <h2>➕ Добавить в отслеживание</h2>
             <form method="post" action="/add" class="form-row">
                 <input type="text" name="imdb_id" placeholder="IMDb ID (например: tt0111161 или tt4574334 Stranger Things 4 сезон)" required>
                 <button type="submit" class="btn btn-primary">Добавить</button>
             </form>
-            <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 10px; display: block;">
+            <small style="color: var(--text-muted); font-size: 12px; margin-top: 10px; display: block;">
                 💡 Для сериалов можно указать сезон в названии (например: "tt4574334 Stranger Things 4 сезон")
             </small>
         </div>
@@ -520,6 +801,7 @@
         <div class="items-grid">
             {% for item in items %}
             <div class="item-card {% if not item.enabled %}disabled{% endif %}" data-id="{{ item.id }}">
+                <input type="checkbox" class="item-checkbox" value="{{ item.id }}" onchange="updateBatchActions()">
                 <div class="item-poster-container">
                     {% if item.poster_url %}
                     <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="item-poster">
@@ -551,6 +833,9 @@
                         {% if item.runtime %}
                         <span>⏱️ {{ item.runtime }}</span>
                         {% endif %}
+                        {% if item.releases_count is defined %}
+                        <span class="releases-count">📊 {{ item.releases_count }} релизов</span>
+                        {% endif %}
                         {% if item.type == 'tv' %}
                             {% if item.target_season %}
                             <span>🎯 Сезон {{ item.target_season }}</span>
@@ -563,6 +848,9 @@
                         {% endif %}
                         {% if item.preferred_audio %}
                         <span>🎙 Озвучка: {{ item.preferred_audio }}</span>
+                        {% endif %}
+                        {% if item.min_releases_count %}
+                        <span>📊 Минимум: {{ item.min_releases_count }}</span>
                         {% endif %}
                     </div>
                     
@@ -586,13 +874,13 @@
                         <button class="btn btn-secondary" onclick="toggleItem({{ item.id }})">
                             {% if item.enabled %}⏸️ Пауза{% else %}▶️ Включить{% endif %}
                         </button>
-                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title }}', '{{ item.type }}', {{ item.target_season if item.target_season else 'null' }}, '{{ item.preferred_quality or '' }}', '{{ item.preferred_audio or '' }}')">
+                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title|replace("'", "\\'") }}', '{{ item.type }}', {{ item.target_season if item.target_season else 'null' }}, '{{ (item.preferred_quality or '')|replace("'", "\\'") }}', '{{ (item.preferred_audio or '')|replace("'", "\\'") }}', {{ item.min_releases_count if item.min_releases_count else 'null' }}, {{ item.check_interval if item.check_interval else 'null' }})">
                             ✏️ Изменить
                         </button>
                         <button class="btn btn-secondary" onclick="refreshItem({{ item.id }})">
                             🔄 Обновить
                         </button>
-                        <button class="btn btn-secondary" onclick="showReleases('{{ item.imdb_id }}', '{{ item.title }}')">
+                        <button class="btn btn-secondary" onclick="showReleases('{{ item.imdb_id }}', '{{ item.title|replace("'", "\\'") }}')">
                             📥 Релизы
                         </button>
                         <button class="btn btn-danger" onclick="deleteItem({{ item.id }})">
@@ -603,6 +891,23 @@
             </div>
             {% endfor %}
         </div>
+        
+        <!-- Пагинация -->
+        {% if pagination and pagination.total_pages > 1 %}
+        <div class="pagination">
+            <button onclick="goToPage({{ pagination.page - 1 }})" {% if not pagination.has_prev %}disabled{% endif %}>‹ Назад</button>
+            {% for p in range(1, pagination.total_pages + 1) %}
+                {% if p == pagination.page %}
+                <button class="current">{{ p }}</button>
+                {% elif p <= 3 or p >= pagination.total_pages - 2 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+                <button onclick="goToPage({{ p }})">{{ p }}</button>
+                {% elif p == 4 or p == pagination.total_pages - 3 %}
+                <button disabled>...</button>
+                {% endif %}
+            {% endfor %}
+            <button onclick="goToPage({{ pagination.page + 1 }})" {% if not pagination.has_next %}disabled{% endif %}>Вперед ›</button>
+        </div>
+        {% endif %}
         {% else %}
         <div class="empty-state">
             <div class="empty-state-icon">📭</div>
@@ -612,6 +917,7 @@
         {% endif %}
     </main>
     
+    <!-- Модальные окна -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -622,7 +928,7 @@
                 <div class="form-group">
                     <label for="editTitle">Название</label>
                     <input type="text" id="editTitle" name="title" required>
-                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
                         Можно указать сезон в названии (например: "Stranger Things 4 сезон")
                     </small>
                 </div>
@@ -636,7 +942,7 @@
                 <div class="form-group" id="seasonGroup" style="display: none;">
                     <label for="editSeason">Сезон для отслеживания (опционально)</label>
                     <input type="number" id="editSeason" name="target_season" min="1" max="100" placeholder="Оставьте пустым для всех сезонов">
-                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
                         Если указан, поиск будет выполняться только для этого сезона
                     </small>
                 </div>
@@ -661,7 +967,7 @@
                         </label>
                     </div>
                     <input type="hidden" id="editQuality" name="preferred_quality" value="">
-                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
                         Будут показываться релизы с любым из выбранных качеств
                     </small>
                 </div>
@@ -673,8 +979,22 @@
                         <option value="оригинал">Оригинал (английский)</option>
                         <option value="dub">DUB (дубляж)</option>
                     </select>
-                    <small style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px; display: block;">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
                         Будут показываться только релизы с указанной озвучкой
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="editMinReleases">Минимальное количество раздач для отслеживания (опционально)</label>
+                    <input type="number" id="editMinReleases" name="min_releases_count" min="1" placeholder="Оставьте пустым для отслеживания всех раздач">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                        Если указано, будут отслеживаться только раздачи, когда их количество достигнет этого значения
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="editCheckInterval">Интервал проверки в минутах (опционально)</label>
+                    <input type="number" id="editCheckInterval" name="check_interval" min="1" placeholder="Оставьте пустым для использования значения по умолчанию (30 минут)">
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                        Если указано, этот элемент будет проверяться с указанным интервалом (в минутах). Иначе используется интервал по умолчанию.
                     </small>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Сохранить</button>
@@ -688,13 +1008,89 @@
                 <h3 id="releasesTitle">📥 Релизы</h3>
                 <button class="modal-close" onclick="closeReleasesModal()">&times;</button>
             </div>
+            <div id="releasesFilters" style="margin-bottom: 20px; display: none;">
+                <div class="filters-row">
+                    <input type="text" id="releaseSearch" placeholder="Поиск по названию" oninput="filterReleases()">
+                    <select id="releaseQualityFilter" onchange="filterReleases()">
+                        <option value="">Все качества</option>
+                        <option value="1080p">1080p</option>
+                        <option value="2160p">2160p</option>
+                        <option value="720p">720p</option>
+                    </select>
+                    <select id="releaseTrackerFilter" onchange="filterReleases()">
+                        <option value="">Все трекеры</option>
+                    </select>
+                    <input type="number" id="releaseMinSeeders" placeholder="Мин. сидеры" min="0" onchange="filterReleases()">
+                    <input type="number" id="releaseMaxSize" placeholder="Макс. размер (GB)" min="0" step="0.1" onchange="filterReleases()">
+                </div>
+            </div>
             <div id="releasesList"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 Экспорт watchlist</h3>
+                <button class="modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button class="btn btn-primary" onclick="exportJSON()">📄 Экспорт в JSON</button>
+                <button class="btn btn-primary" onclick="exportCSV()">📊 Экспорт в CSV</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📤 Импорт watchlist</h3>
+                <button class="modal-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            <form id="importForm" onsubmit="importJSON(event)">
+                <div class="form-group">
+                    <label for="importFile">Выберите JSON файл</label>
+                    <input type="file" id="importFile" accept=".json" required>
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                        Поддерживается только формат JSON
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Импортировать</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="modal" id="statsModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📊 Статистика</h3>
+                <button class="modal-close" onclick="closeStatsModal()">&times;</button>
+            </div>
+            <div id="statsContent">
+                <div class="loading"></div>
+            </div>
         </div>
     </div>
     
     <div class="toast" id="toast"></div>
     
     <script>
+        // Тема
+        function initTheme() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        initTheme();
+        
+        // Утилиты
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -702,6 +1098,309 @@
             setTimeout(() => toast.className = 'toast', 3000);
         }
         
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                page: parseInt(params.get('page')) || 1,
+                per_page: parseInt(params.get('per_page')) || 20,
+                search: params.get('search') || '',
+                type_filter: params.get('type_filter') || 'all',
+                enabled_filter: params.get('enabled_filter') === 'true' ? true : params.get('enabled_filter') === 'false' ? false : null,
+                year_filter: params.get('year_filter') || null,
+                sort_by: params.get('sort_by') || 'created_at',
+                sort_order: params.get('sort_order') || 'desc'
+            };
+        }
+        
+        function buildUrl(params) {
+            const urlParams = new URLSearchParams();
+            Object.keys(params).forEach(key => {
+                if (params[key] !== null && params[key] !== '' && params[key] !== 'all') {
+                    urlParams.append(key, params[key]);
+                }
+            });
+            return '?' + urlParams.toString();
+        }
+        
+        function goToPage(page) {
+            const params = getUrlParams();
+            params.page = page;
+            window.location.href = buildUrl(params);
+        }
+        
+        function resetFilters() {
+            window.location.href = '/';
+        }
+        
+        // Batch операции
+        function updateBatchActions() {
+            const checked = document.querySelectorAll('.item-checkbox:checked');
+            const batchActions = document.getElementById('batchActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (checked.length > 0) {
+                batchActions.classList.add('active');
+                selectedCount.textContent = checked.length;
+            } else {
+                batchActions.classList.remove('active');
+            }
+        }
+        
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBatchActions();
+        }
+        
+        function clearSelection() {
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBatchActions();
+        }
+        
+        function getSelectedIds() {
+            return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => parseInt(cb.value));
+        }
+        
+        async function batchToggle(enabled) {
+            const ids = getSelectedIds();
+            if (ids.length === 0) return;
+            
+            if (!confirm(`Вы уверены, что хотите ${enabled ? 'включить' : 'выключить'} ${ids.length} элементов?`)) return;
+            
+            showToast('Обработка...');
+            const res = await fetch('/api/batch/toggle', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({item_ids: ids, enabled: enabled})
+            });
+            
+            if (res.ok) {
+                showToast(`Успешно обновлено ${ids.length} элементов`);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Ошибка обновления', true);
+            }
+        }
+        
+        async function batchDelete() {
+            const ids = getSelectedIds();
+            if (ids.length === 0) return;
+            
+            if (!confirm(`Вы уверены, что хотите удалить ${ids.length} элементов?`)) return;
+            
+            showToast('Удаление...');
+            const res = await fetch('/api/batch/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({item_ids: ids})
+            });
+            
+            if (res.ok) {
+                showToast(`Удалено ${ids.length} элементов`);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Ошибка удаления', true);
+            }
+        }
+        
+        // Экспорт/Импорт
+        function showExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+        
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+        
+        async function exportJSON() {
+            try {
+                const res = await fetch('/api/export/json');
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `watchlist_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Экспорт завершен');
+                closeExportModal();
+            } catch (e) {
+                showToast('Ошибка экспорта', true);
+            }
+        }
+        
+        async function exportCSV() {
+            try {
+                const res = await fetch('/api/export/csv');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `watchlist_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Экспорт завершен');
+                closeExportModal();
+            } catch (e) {
+                showToast('Ошибка экспорта', true);
+            }
+        }
+        
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('active');
+        }
+        
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+        }
+        
+        async function importJSON(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                showToast('Импорт...');
+                const res = await fetch('/api/import/json', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: text
+                });
+                
+                const result = await res.json();
+                if (res.ok) {
+                    showToast(`Импортировано ${result.imported} элементов`);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Ошибка импорта: ' + (result.error || 'Неизвестная ошибка'), true);
+                }
+            } catch (e) {
+                showToast('Ошибка чтения файла', true);
+            }
+        }
+        
+        // Статистика
+        async function showStats() {
+            document.getElementById('statsModal').classList.add('active');
+            document.getElementById('statsContent').innerHTML = '<div class="loading"></div>';
+            
+            try {
+                const res = await fetch('/api/stats');
+                const stats = await res.json();
+                
+                let html = '<div class="stats-grid">';
+                html += `<div class="stats-card"><h3>${stats.total_items || 0}</h3><p>Всего элементов</p></div>`;
+                html += `<div class="stats-card"><h3>${stats.active_items || 0}</h3><p>Активных</p></div>`;
+                html += `<div class="stats-card"><h3>${stats.total_releases || 0}</h3><p>Всего релизов</p></div>`;
+                html += `<div class="stats-card"><h3>${stats.releases_24h || 0}</h3><p>За 24 часа</p></div>`;
+                html += `<div class="stats-card"><h3>${stats.releases_7d || 0}</h3><p>За неделю</p></div>`;
+                html += `<div class="stats-card"><h3>${stats.releases_30d || 0}</h3><p>За месяц</p></div>`;
+                html += '</div>';
+                
+                if (stats.top_trackers && stats.top_trackers.length > 0) {
+                    html += '<h3 style="margin-top: 30px; margin-bottom: 15px;">Топ трекеров:</h3><ul style="list-style: none; padding: 0;">';
+                    stats.top_trackers.forEach(t => {
+                        html += `<li style="padding: 10px; background: var(--bg-secondary); margin-bottom: 5px; border-radius: 8px;">${t.tracker}: ${t.count} релизов</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                document.getElementById('statsContent').innerHTML = html;
+            } catch (e) {
+                document.getElementById('statsContent').innerHTML = '<p style="color: var(--accent);">Ошибка загрузки статистики</p>';
+            }
+        }
+        
+        function closeStatsModal() {
+            document.getElementById('statsModal').classList.remove('active');
+        }
+        
+        // Релизы с фильтрацией
+        let currentReleases = [];
+        let currentImdbId = '';
+        
+        async function showReleases(imdbId, title) {
+            currentImdbId = imdbId;
+            document.getElementById('releasesTitle').textContent = `📥 Релизы: ${title}`;
+            document.getElementById('releasesList').innerHTML = '<div class="loading"></div>';
+            document.getElementById('releasesModal').classList.add('active');
+            document.getElementById('releasesFilters').style.display = 'block';
+            
+            try {
+                const res = await fetch(`/api/releases/${imdbId}/filtered`);
+                currentReleases = await res.json();
+                
+                // Заполняем фильтр трекеров
+                const trackers = [...new Set(currentReleases.map(r => r.tracker).filter(Boolean))];
+                const trackerSelect = document.getElementById('releaseTrackerFilter');
+                trackerSelect.innerHTML = '<option value="">Все трекеры</option>';
+                trackers.forEach(t => {
+                    trackerSelect.innerHTML += `<option value="${t}">${t}</option>`;
+                });
+                
+                filterReleases();
+            } catch (e) {
+                document.getElementById('releasesList').innerHTML = '<p style="color: var(--text-muted);">Ошибка загрузки релизов</p>';
+            }
+        }
+        
+        function filterReleases() {
+            const search = document.getElementById('releaseSearch').value.toLowerCase();
+            const quality = document.getElementById('releaseQualityFilter').value.toLowerCase();
+            const tracker = document.getElementById('releaseTrackerFilter').value;
+            const minSeeders = parseInt(document.getElementById('releaseMinSeeders').value) || 0;
+            const maxSizeGB = parseFloat(document.getElementById('releaseMaxSize').value) || Infinity;
+            
+            const filtered = currentReleases.filter(r => {
+                const titleMatch = !search || (r.title || '').toLowerCase().includes(search);
+                const qualityMatch = !quality || (r.quality || '').toLowerCase().includes(quality);
+                const trackerMatch = !tracker || r.tracker === tracker;
+                const seedersMatch = (r.seeders || 0) >= minSeeders;
+                const sizeGB = r.size ? r.size / 1024 / 1024 / 1024 : 0;
+                const sizeMatch = sizeGB <= maxSizeGB;
+                
+                return titleMatch && qualityMatch && trackerMatch && seedersMatch && sizeMatch;
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById('releasesList').innerHTML = '<p style="color: var(--text-muted);">Релизы не найдены</p>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            filtered.forEach(r => {
+                const sizeGB = r.size ? (r.size / 1024 / 1024 / 1024).toFixed(2) : 'N/A';
+                html += `
+                    <div style="background: var(--bg-secondary); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+                        <div style="font-weight: 500; margin-bottom: 8px;">${r.title || 'N/A'}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); display: flex; gap: 15px; flex-wrap: wrap;">
+                            <span>📺 ${r.quality || 'N/A'}</span>
+                            <span>💾 ${sizeGB} GB</span>
+                            <span>🌱 ${r.seeders || 0}</span>
+                            <span>🔗 ${r.tracker || 'N/A'}</span>
+                            ${r.created_at ? `<span>📅 ${new Date(r.created_at).toLocaleDateString('ru-RU')}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('releasesList').innerHTML = html;
+        }
+        
+        function closeReleasesModal() {
+            document.getElementById('releasesModal').classList.remove('active');
+            document.getElementById('releasesFilters').style.display = 'none';
+        }
+        
+        // Остальные функции
         async function deleteItem(id) {
             if (!confirm('Удалить эту запись?')) return;
             
@@ -742,19 +1441,19 @@
             }
         }
         
-        function openEditModal(id, title, type, targetSeason, preferredQuality, preferredAudio) {
+        function openEditModal(id, title, type, targetSeason, preferredQuality, preferredAudio, minReleasesCount, checkInterval) {
             document.getElementById('editForm').action = `/edit/${id}`;
             document.getElementById('editTitle').value = title;
             document.getElementById('editType').value = type;
             document.getElementById('editSeason').value = targetSeason || '';
             document.getElementById('editAudio').value = preferredAudio || '';
+            document.getElementById('editMinReleases').value = minReleasesCount || '';
+            document.getElementById('editCheckInterval').value = checkInterval || '';
             
-            // Обрабатываем множественный выбор качества
             const qualityCheckboxes = document.querySelectorAll('.quality-checkbox');
             qualityCheckboxes.forEach(cb => cb.checked = false);
             
             if (preferredQuality) {
-                // Разбиваем строку на отдельные качества (поддерживаем запятую как разделитель)
                 const qualities = preferredQuality.split(',').map(q => q.trim());
                 qualityCheckboxes.forEach(cb => {
                     if (qualities.includes(cb.value)) {
@@ -763,10 +1462,8 @@
                 });
             }
             
-            // Обновляем скрытое поле при изменении чекбоксов
             updateQualityHiddenField();
             
-            // Показываем/скрываем поле сезона в зависимости от типа
             const seasonGroup = document.getElementById('seasonGroup');
             if (type === 'tv') {
                 seasonGroup.style.display = 'block';
@@ -777,74 +1474,34 @@
             document.getElementById('editModal').classList.add('active');
         }
         
-        // Функция для обновления скрытого поля с выбранными качествами
         function updateQualityHiddenField() {
             const checkedBoxes = Array.from(document.querySelectorAll('.quality-checkbox:checked'))
                 .map(cb => cb.value);
             document.getElementById('editQuality').value = checkedBoxes.join(',');
         }
         
-        // Добавляем обработчики событий для чекбоксов качества
         document.addEventListener('DOMContentLoaded', function() {
             const qualityCheckboxes = document.querySelectorAll('.quality-checkbox');
             qualityCheckboxes.forEach(cb => {
                 cb.addEventListener('change', updateQualityHiddenField);
             });
-        });
-        
-        // Обновляем видимость поля сезона при изменении типа
-        document.getElementById('editType')?.addEventListener('change', function() {
-            const seasonGroup = document.getElementById('seasonGroup');
-            if (this.value === 'tv') {
-                seasonGroup.style.display = 'block';
-            } else {
-                seasonGroup.style.display = 'none';
-            }
-        });
-        
-        // Обновляем скрытое поле перед отправкой формы
-        document.getElementById('editForm')?.addEventListener('submit', function() {
-            updateQualityHiddenField();
+            
+            document.getElementById('editType')?.addEventListener('change', function() {
+                const seasonGroup = document.getElementById('seasonGroup');
+                if (this.value === 'tv') {
+                    seasonGroup.style.display = 'block';
+                } else {
+                    seasonGroup.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('editForm')?.addEventListener('submit', function() {
+                updateQualityHiddenField();
+            });
         });
         
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('active');
-        }
-        
-        async function showReleases(imdbId, title) {
-            document.getElementById('releasesTitle').textContent = `📥 Релизы: ${title}`;
-            document.getElementById('releasesList').innerHTML = '<div class="loading"></div>';
-            document.getElementById('releasesModal').classList.add('active');
-            
-            const res = await fetch(`/api/releases/${imdbId}`);
-            const releases = await res.json();
-            
-            if (releases.length === 0) {
-                document.getElementById('releasesList').innerHTML = '<p style="color: rgba(255,255,255,0.6)">Релизы пока не найдены</p>';
-                return;
-            }
-            
-            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
-            releases.forEach(r => {
-                const sizeGB = r.size ? (r.size / 1024 / 1024 / 1024).toFixed(2) : 'N/A';
-                html += `
-                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-                        <div style="font-weight: 500; margin-bottom: 8px;">${r.title || 'N/A'}</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.6); display: flex; gap: 15px; flex-wrap: wrap;">
-                            <span>📺 ${r.quality || 'N/A'}</span>
-                            <span>💾 ${sizeGB} GB</span>
-                            <span>🌱 ${r.seeders || 0}</span>
-                            <span>🔗 ${r.tracker || 'N/A'}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            document.getElementById('releasesList').innerHTML = html;
-        }
-        
-        function closeReleasesModal() {
-            document.getElementById('releasesModal').classList.remove('active');
         }
         
         document.addEventListener('click', function(e) {

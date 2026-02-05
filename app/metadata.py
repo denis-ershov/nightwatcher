@@ -1,11 +1,18 @@
 import httpx
 from app.config import TMDB_API_KEY
+from app.logger import get_logger
+from app.cache import cached
+from app.retry import retry
+
+logger = get_logger(__name__)
 
 TVMAZE_BASE = "https://api.tvmaze.com"
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 
+@retry(max_attempts=3, delay=1.0, backoff=2.0)
+@cached(ttl=86400, key_prefix="tvmaze")
 async def fetch_from_tvmaze(imdb_id: str) -> dict | None:
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -50,13 +57,15 @@ async def fetch_from_tvmaze(imdb_id: str) -> dict | None:
                 "schedule": f"{', '.join(data.get('schedule', {}).get('days', []))} at {data.get('schedule', {}).get('time', '')}" if data.get("schedule", {}).get("days") else None,
             }
     except Exception as e:
-        print(f"TVMaze error: {e}")
+        logger.error(f"TVMaze error: {e}", exc_info=True)
     return None
 
 
+@retry(max_attempts=3, delay=1.0, backoff=2.0)
+@cached(ttl=86400, key_prefix="tmdb")
 async def fetch_from_tmdb(imdb_id: str) -> dict | None:
     if not TMDB_API_KEY:
-        print("TMDB_API_KEY not configured")
+        logger.warning("TMDB_API_KEY not configured")
         return None
     
     try:
@@ -164,7 +173,7 @@ async def fetch_from_tmdb(imdb_id: str) -> dict | None:
                 }
     
     except Exception as e:
-        print(f"TMDB error: {e}")
+        logger.error(f"TMDB error: {e}", exc_info=True)
     return None
 
 

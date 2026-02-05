@@ -6,8 +6,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import AsyncSessionLocal
 from app.prowlarr_client import search_by_query, search_by_imdb, get_download_link, get_client
-from app.notifier import send_message, format_new_release_notification
+from app.notifier import send_message, format_new_release_notification, send_error_notification
 from app.season_parser import extract_season_from_title
+from app.logger import get_logger
+from app.retry import retry
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 import asyncio
@@ -15,6 +17,8 @@ import re
 import hashlib
 import bencode
 import urllib.parse
+
+logger = get_logger(__name__)
 
 async def torrent_to_magnet(torrent_url: str) -> Optional[str]:
     """
@@ -81,6 +85,7 @@ async def process_item(
     target_season: Optional[int] = None,
     preferred_quality: Optional[str] = None,
     preferred_audio: Optional[str] = None,
+    min_releases_count: Optional[int] = None,
 ) -> int:
     """
     Обработать один элемент watchlist асинхронно.
@@ -109,13 +114,17 @@ async def process_item(
     if not search_query:
         return 0
     
+    # Добавляем год к поисковому запросу для более точного поиска
+    if year:
+        search_query = f"{search_query} {year}"
+    
     # Для сериалов добавляем номер сезона в поисковый запрос, если указан
     if item_type == "tv" and target_season:
         # Добавляем номер сезона в разных форматах для лучшего поиска
         season_formats = [
-            f"{search_query} S{target_season:02d}",  # "Stranger Things S04"
-            f"{search_query} Season {target_season}",  # "Stranger Things Season 4"
-            f"{search_query} {target_season}",  # "Stranger Things 4"
+            f"{search_query} S{target_season:02d}",  # "Stranger Things 2016 S04"
+            f"{search_query} Season {target_season}",  # "Stranger Things 2016 Season 4"
+            f"{search_query} {target_season}",  # "Stranger Things 2016 4"
         ]
         # Используем первый формат как основной, остальные как fallback
         search_query = season_formats[0]
@@ -145,19 +154,19 @@ async def process_item(
                 results = imdb_results
             else:
                 # Все результаты имеют imdbId: 0 или не совпадают - индексер не поддерживает IMDb ID
-                print(f"Indexer doesn't support IMDb ID search (all results have imdbId: 0), trying search by query: {search_query}")
+                logger.info(f"Indexer doesn't support IMDb ID search (all results have imdbId: 0), trying search by query: {search_query}")
                 results = await search_by_query(search_query)
         else:
             # Если поиск по IMDb не дал результатов, ищем по названию
-            print(f"No results by IMDb {imdb_id}, trying search by query: {search_query}")
+            logger.info(f"No results by IMDb {imdb_id}, trying search by query: {search_query}")
             results = await search_by_query(search_query)
     except Exception as e:
         # Если поиск по IMDb не поддерживается или ошибка, ищем по названию
-        print(f"IMDb search failed, trying query search: {e}")
+        logger.warning(f"IMDb search failed, trying query search: {e}", exc_info=True)
         try:
             results = await search_by_query(search_query)
         except Exception as e2:
-            print(f"Search error for {search_query}: {e2}")
+            logger.error(f"Search error for {search_query}: {e2}", exc_info=True)
             return 0
     
     # Фильтруем результаты по соответствию IMDb ID или названию
@@ -165,6 +174,34 @@ async def process_item(
     
     # Фильтруем результаты по качеству и озвучке, если указаны предпочтения
     filtered_results = filter_releases_by_preferences(results, preferred_quality, preferred_audio)
+    
+    # Проверяем минимальное количество раздач перед отправкой уведомлений
+    if min_releases_count and min_releases_count > 0:
+        # Подсчитываем количество уникальных раздач
+        existing_count_result = await db.execute(
+            text("SELECT COUNT(*) FROM torrent_releases WHERE imdb_id = :imdb"),
+            {"imdb": imdb_id}
+        )
+        existing_count = existing_count_result.scalar() or 0
+        
+        # Если текущее количество раздач меньше минимального, не отправляем уведомления
+        if existing_count + len(filtered_results) < min_releases_count:
+            logger.info(
+                f"Item {item_id} ({imdb_id}): Found {len(filtered_results)} releases, "
+                f"but min_releases_count is {min_releases_count} (current: {existing_count}). "
+                f"Skipping notifications."
+            )
+            # Все равно сохраняем релизы в БД, но не отправляем уведомления
+            should_notify = False
+        else:
+            should_notify = True
+            logger.info(
+                f"Item {item_id} ({imdb_id}): Found {len(filtered_results)} releases, "
+                f"total will be {existing_count + len(filtered_results)} >= {min_releases_count}. "
+                f"Sending notifications."
+            )
+    else:
+        should_notify = True
     
     for r in filtered_results:
         # Извлекаем guid для формирования ссылок на скачивание
@@ -383,18 +420,20 @@ async def process_item(
             )
             await db.commit()
             
-            # Отправляем уведомление асинхронно (не блокируем обработку)
-            change_type = detect_change_type(release_data["title"], item_type)
-            notification = format_new_release_notification(item_data, release_data, change_type)
-            
-            # Создаем задачу для отправки уведомления (не ждем завершения)
-            asyncio.create_task(send_message(notification, poster_url))
+            # Отправляем уведомление только если разрешено
+            if should_notify:
+                # Отправляем уведомление асинхронно (не блокируем обработку)
+                change_type = detect_change_type(release_data["title"], item_type)
+                notification = format_new_release_notification(item_data, release_data, change_type)
+                
+                # Создаем задачу для отправки уведомления (не ждем завершения)
+                asyncio.create_task(send_message(notification, poster_url, imdb_id=imdb_id))
             
             found_count += 1
             
         except Exception as e:
             await db.rollback()
-            print(f"Error processing release: {e}")
+            logger.error(f"Error processing release: {e}", exc_info=True)
     
     # Обновляем время последней проверки
     try:
@@ -405,7 +444,7 @@ async def process_item(
         await db.commit()
     except Exception as e:
         await db.rollback()
-        print(f"Error updating last_checked: {e}")
+        logger.error(f"Error updating last_checked: {e}", exc_info=True)
     
     return found_count
 
@@ -418,19 +457,24 @@ async def run() -> int:
         Общее количество найденных новых релизов
     """
     if not AsyncSessionLocal:
-        print("Database not configured")
+        logger.error("Database not configured")
         return 0
     
-            # Получаем список элементов в отдельной сессии
+    # Получаем список элементов в отдельной сессии
     async with AsyncSessionLocal() as db:
         try:
             result = await db.execute(
-                text("""SELECT id, imdb_id, title, original_title, type, poster_url, year, genre, rating, runtime, target_season, preferred_quality, preferred_audio
+                text("""SELECT id, imdb_id, title, original_title, type, poster_url, year, genre, rating, runtime, target_season, preferred_quality, preferred_audio, min_releases_count, check_interval
                         FROM imdb_watchlist WHERE enabled = true""")
             )
             items = result.fetchall()
         except Exception as e:
-            print(f"Error fetching items: {e}")
+            logger.error(f"Error fetching items: {e}", exc_info=True)
+            await send_error_notification(
+                "Database Error",
+                f"Ошибка при получении списка элементов: {str(e)}",
+                {"function": "run"}
+            )
             return 0
     
     if not items:
@@ -460,9 +504,10 @@ async def run() -> int:
                         item[10],  # target_season
                         item[11],  # preferred_quality
                         item[12],  # preferred_audio
+                        item[13],  # min_releases_count
                     )
                 except Exception as e:
-                    print(f"Error processing item {item[0]}: {e}")
+                    logger.error(f"Error processing item {item[0]}: {e}", exc_info=True)
                     return 0
     
     # Запускаем параллельную обработку
@@ -474,13 +519,14 @@ async def run() -> int:
         found_count = 0
         for result in results:
             if isinstance(result, Exception):
-                print(f"Error processing item: {result}")
+                logger.error(f"Error processing item: {result}", exc_info=True)
             else:
                 found_count += result
         
+        logger.info(f"Watcher completed. Found {found_count} new releases")
         return found_count
     except Exception as e:
-        print(f"Watcher error: {e}")
+        logger.error(f"Watcher error: {e}", exc_info=True)
         return 0
 
 def filter_results_by_imdb_or_title(
