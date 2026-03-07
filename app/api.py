@@ -310,8 +310,8 @@ async def add(request: Request, imdb_id: str = Form(...), db: AsyncSession = Dep
     try:
         await db.execute(
             text("""
-                INSERT INTO imdb_watchlist (imdb_id, title, original_title, type, poster_url, year, genre, plot, rating, runtime, total_seasons, target_season)
-                VALUES (:imdb_id, :title, :original_title, :type, :poster_url, :year, :genre, :plot, :rating, :runtime, :total_seasons, :target_season)
+                INSERT INTO imdb_watchlist (imdb_id, title, original_title, type, poster_url, year, genre, plot, rating, runtime, total_seasons, target_season, max_releases_count)
+                VALUES (:imdb_id, :title, :original_title, :type, :poster_url, :year, :genre, :plot, :rating, :runtime, :total_seasons, :target_season, :max_releases_count)
                 ON CONFLICT (imdb_id) DO UPDATE SET
                     title = EXCLUDED.title,
                     original_title = EXCLUDED.original_title,
@@ -323,6 +323,7 @@ async def add(request: Request, imdb_id: str = Form(...), db: AsyncSession = Dep
                     runtime = EXCLUDED.runtime,
                     total_seasons = EXCLUDED.total_seasons,
                     target_season = COALESCE(EXCLUDED.target_season, imdb_watchlist.target_season),
+                    max_releases_count = COALESCE(imdb_watchlist.max_releases_count, EXCLUDED.max_releases_count),
                     updated_at = now()
             """),
             {
@@ -338,6 +339,7 @@ async def add(request: Request, imdb_id: str = Form(...), db: AsyncSession = Dep
                 "runtime": movie_info.get("runtime"),
                 "total_seasons": movie_info.get("total_seasons"),
                 "target_season": target_season,
+                "max_releases_count": 1,
             }
         )
         await db.commit()
