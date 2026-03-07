@@ -205,7 +205,7 @@ async def index(
     # Основной запрос с данными
     offset = (page - 1) * per_page
     query = f"""
-        SELECT id, imdb_id, title, original_title, type, enabled, created_at, updated_at, poster_url, year, genre, plot, rating, runtime, last_checked, total_seasons, target_season, preferred_quality, preferred_audio, min_releases_count, check_interval
+        SELECT id, imdb_id, title, original_title, type, enabled, created_at, updated_at, poster_url, year, genre, plot, rating, runtime, last_checked, total_seasons, target_season, preferred_quality, preferred_audio, max_releases_count, check_interval
         FROM imdb_watchlist 
         WHERE {where_clause}
         ORDER BY {sort_by} {sort_order}
@@ -246,7 +246,7 @@ async def index(
             "target_season": item[16],
             "preferred_quality": item[17],
             "preferred_audio": item[18],
-            "min_releases_count": item[19],
+            "max_releases_count": item[19],
             "check_interval": item[20],
             "releases_count": releases_count,
         })
@@ -386,7 +386,7 @@ async def edit_item(
     target_season: str = Form(None),
     preferred_quality: str = Form(None),
     preferred_audio: str = Form(None),
-    min_releases_count: str = Form(None),
+    max_releases_count: str = Form(None),
     check_interval: str = Form(None),
     db: AsyncSession = Depends(get_db)
 ):
@@ -412,11 +412,11 @@ async def edit_item(
     quality_value = preferred_quality.strip() if preferred_quality and preferred_quality.strip() else None
     audio_value = preferred_audio.strip() if preferred_audio and preferred_audio.strip() else None
     
-    # Обрабатываем минимальное количество раздач
-    min_releases_value = None
-    if min_releases_count and min_releases_count.strip():
+    # Обрабатываем максимальное количество раздач
+    max_releases_value = None
+    if max_releases_count and max_releases_count.strip():
         try:
-            min_releases_value = int(min_releases_count.strip())
+            max_releases_value = int(max_releases_count.strip())
         except ValueError:
             pass
     
@@ -435,7 +435,7 @@ async def edit_item(
             text("""UPDATE imdb_watchlist 
                     SET title = :title, type = :type, target_season = :target_season, 
                         preferred_quality = :preferred_quality, preferred_audio = :preferred_audio, 
-                        min_releases_count = :min_releases_count, check_interval = :check_interval, updated_at = now() 
+                        max_releases_count = :max_releases_count, check_interval = :check_interval, updated_at = now() 
                     WHERE id = :id"""),
             {
                 "id": item_id, 
@@ -444,7 +444,7 @@ async def edit_item(
                 "target_season": season_value,
                 "preferred_quality": quality_value,
                 "preferred_audio": audio_value,
-                "min_releases_count": min_releases_value,
+                "max_releases_count": max_releases_value,
                 "check_interval": check_interval_value
             }
         )
@@ -667,7 +667,7 @@ async def export_json(request: Request, db: AsyncSession = Depends(get_db)):
     
     try:
         result = await db.execute(text("""
-            SELECT imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, min_releases_count
+            SELECT imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, max_releases_count
             FROM imdb_watchlist ORDER BY created_at DESC
         """))
         items = result.fetchall()
@@ -685,7 +685,7 @@ async def export_json(request: Request, db: AsyncSession = Depends(get_db)):
                 "target_season": item[7],
                 "preferred_quality": item[8],
                 "preferred_audio": item[9],
-                "min_releases_count": item[10]
+                "max_releases_count": item[10]
             })
         
         return JSONResponse(items_list)
@@ -702,14 +702,14 @@ async def export_csv(request: Request, db: AsyncSession = Depends(get_db)):
     
     try:
         result = await db.execute(text("""
-            SELECT imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, min_releases_count
+            SELECT imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, max_releases_count
             FROM imdb_watchlist ORDER BY created_at DESC
         """))
         items = result.fetchall()
         
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["imdb_id", "title", "original_title", "type", "enabled", "year", "genre", "target_season", "preferred_quality", "preferred_audio", "min_releases_count"])
+        writer.writerow(["imdb_id", "title", "original_title", "type", "enabled", "year", "genre", "target_season", "preferred_quality", "preferred_audio", "max_releases_count"])
         
         for item in items:
             writer.writerow(item)
@@ -750,8 +750,8 @@ async def import_json(request: Request, db: AsyncSession = Depends(get_db)):
                 
                 await db.execute(
                     text("""
-                        INSERT INTO imdb_watchlist (imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, min_releases_count)
-                        VALUES (:imdb_id, :title, :original_title, :type, :enabled, :year, :genre, :target_season, :preferred_quality, :preferred_audio, :min_releases_count)
+                        INSERT INTO imdb_watchlist (imdb_id, title, original_title, type, enabled, year, genre, target_season, preferred_quality, preferred_audio, max_releases_count)
+                        VALUES (:imdb_id, :title, :original_title, :type, :enabled, :year, :genre, :target_season, :preferred_quality, :preferred_audio, :max_releases_count)
                         ON CONFLICT (imdb_id) DO UPDATE SET
                             title = EXCLUDED.title,
                             original_title = EXCLUDED.original_title,
@@ -768,7 +768,7 @@ async def import_json(request: Request, db: AsyncSession = Depends(get_db)):
                         "target_season": item.get("target_season"),
                         "preferred_quality": item.get("preferred_quality"),
                         "preferred_audio": item.get("preferred_audio"),
-                        "min_releases_count": item.get("min_releases_count")
+                        "max_releases_count": item.get("max_releases_count") or item.get("min_releases_count")  # Поддержка старого формата
                     }
                 )
                 imported += 1

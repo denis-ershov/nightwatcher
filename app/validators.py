@@ -32,14 +32,14 @@ class EditItemRequest(BaseModel):
     target_season: Optional[int] = Field(None, ge=1, le=100)
     preferred_quality: Optional[str] = Field(None, max_length=100)
     preferred_audio: Optional[str] = Field(None, max_length=100)
-    min_releases_count: Optional[int] = Field(None, ge=1, le=1000)
+    max_releases_count: Optional[int] = Field(None, ge=1, le=1000)
     
     @field_validator('preferred_quality')
     @classmethod
     def validate_quality(cls, v):
         """Валидация качества"""
         if v:
-            valid_qualities = ['1080p', '2160p', '720p', '480p', '4K', 'UHD', 'HD', 'SD']
+            valid_qualities = ['1080p', '2160p SDR', '2160p HDR', '2160p', '720p', '480p', '4K', 'UHD', 'HD', 'SD']
             qualities = [q.strip().lower() for q in v.split(',')]
             for q in qualities:
                 if not any(vq in q for vq in valid_qualities):

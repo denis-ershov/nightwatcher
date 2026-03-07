@@ -85,7 +85,7 @@ async def process_item(
     target_season: Optional[int] = None,
     preferred_quality: Optional[str] = None,
     preferred_audio: Optional[str] = None,
-    min_releases_count: Optional[int] = None,
+    max_releases_count: Optional[int] = None,
 ) -> int:
     """
     Обработать один элемент watchlist асинхронно.
@@ -108,9 +108,8 @@ async def process_item(
         "runtime": runtime,
     }
     
-    # Используем оригинальное название для поиска (приоритетно), если оно есть
-    # Это улучшает поиск торрентов, так как большинство раздач на английском
-    search_query = original_title if original_title else (title if title else imdb_id)
+    # Приоритет: оригинальное название, при отсутствии — локализованное или IMDb ID
+    search_query = (original_title or "").strip() or (title or "").strip() or imdb_id
     if not search_query:
         return 0
     
@@ -129,8 +128,8 @@ async def process_item(
         # Используем первый формат как основной, остальные как fallback
         search_query = season_formats[0]
     elif item_type == "tv":
-        # Если сезон не указан, но есть в названии - извлекаем его
-        season_from_title = extract_season_from_title(title) or extract_season_from_title(original_title)
+        # Если сезон не указан, извлекаем из оригинального или локализованного названия
+        season_from_title = extract_season_from_title(original_title) or extract_season_from_title(title)
         if season_from_title:
             search_query = f"{search_query} S{season_from_title:02d}"
     
@@ -175,8 +174,8 @@ async def process_item(
     # Фильтруем результаты по качеству и озвучке, если указаны предпочтения
     filtered_results = filter_releases_by_preferences(results, preferred_quality, preferred_audio)
     
-    # Проверяем минимальное количество раздач перед отправкой уведомлений
-    if min_releases_count and min_releases_count > 0:
+    # Проверяем максимальное количество раздач перед отправкой уведомлений
+    if max_releases_count and max_releases_count > 0:
         # Подсчитываем количество уникальных раздач
         existing_count_result = await db.execute(
             text("SELECT COUNT(*) FROM torrent_releases WHERE imdb_id = :imdb"),
@@ -184,20 +183,28 @@ async def process_item(
         )
         existing_count = existing_count_result.scalar() or 0
         
-        # Если текущее количество раздач меньше минимального, не отправляем уведомления
-        if existing_count + len(filtered_results) < min_releases_count:
+        # Если текущее количество раздач больше или равно максимальному, не отправляем уведомления
+        if existing_count >= max_releases_count:
             logger.info(
                 f"Item {item_id} ({imdb_id}): Found {len(filtered_results)} releases, "
-                f"but min_releases_count is {min_releases_count} (current: {existing_count}). "
+                f"but max_releases_count is {max_releases_count} (current: {existing_count}). "
                 f"Skipping notifications."
             )
             # Все равно сохраняем релизы в БД, но не отправляем уведомления
             should_notify = False
+        elif existing_count + len(filtered_results) > max_releases_count:
+            # Если добавление новых релизов превысит максимум, отправляем уведомления только до достижения максимума
+            logger.info(
+                f"Item {item_id} ({imdb_id}): Found {len(filtered_results)} releases, "
+                f"but max_releases_count is {max_releases_count} (current: {existing_count}). "
+                f"Will notify only until max is reached."
+            )
+            should_notify = True
         else:
             should_notify = True
             logger.info(
                 f"Item {item_id} ({imdb_id}): Found {len(filtered_results)} releases, "
-                f"total will be {existing_count + len(filtered_results)} >= {min_releases_count}. "
+                f"total will be {existing_count + len(filtered_results)} <= {max_releases_count}. "
                 f"Sending notifications."
             )
     else:
@@ -464,7 +471,7 @@ async def run() -> int:
     async with AsyncSessionLocal() as db:
         try:
             result = await db.execute(
-                text("""SELECT id, imdb_id, title, original_title, type, poster_url, year, genre, rating, runtime, target_season, preferred_quality, preferred_audio, min_releases_count, check_interval
+                text("""SELECT id, imdb_id, title, original_title, type, poster_url, year, genre, rating, runtime, target_season, preferred_quality, preferred_audio, max_releases_count, check_interval
                         FROM imdb_watchlist WHERE enabled = true""")
             )
             items = result.fetchall()
@@ -504,7 +511,7 @@ async def run() -> int:
                         item[10],  # target_season
                         item[11],  # preferred_quality
                         item[12],  # preferred_audio
-                        item[13],  # min_releases_count
+                        item[13],  # max_releases_count
                     )
                 except Exception as e:
                     logger.error(f"Error processing item {item[0]}: {e}", exc_info=True)
@@ -631,7 +638,7 @@ def filter_releases_by_preferences(
     
     Args:
         results: Список результатов от Prowlarr
-        preferred_quality: Предпочтительное качество (например: "1080p", "2160p", "UHD", "4K")
+        preferred_quality: Предпочтительное качество (например: "1080p", "2160p SDR", "2160p HDR", "UHD", "4K")
         preferred_audio: Предпочтительная озвучка (например: "русская", "русский", "dub", "озвучка")
     
     Returns:
@@ -659,7 +666,8 @@ def filter_releases_by_preferences(
             # Нормализуем варианты качества
             quality_variants = {
                 "1080p": ["1080p", "1080", "full hd", "fhd"],
-                "2160p": ["2160p", "2160", "4k", "uhd", "ultra hd"],
+                "2160p SDR": ["2160p sdr", "2160 sdr", "4k sdr", "uhd sdr", "ultra hd sdr", "2160p", "2160", "4k", "uhd", "ultra hd"],
+                "2160p HDR": ["2160p hdr", "2160 hdr", "4k hdr", "uhd hdr", "ultra hd hdr", "hdr10", "hdr10+", "dolby vision"],
                 "720p": ["720p", "720", "hd"],
                 "480p": ["480p", "480", "sd"],
             }

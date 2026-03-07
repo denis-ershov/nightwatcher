@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS imdb_watchlist (
     last_notified_season INTEGER DEFAULT 0,
     last_notified_episode INTEGER DEFAULT 0,
     target_season INTEGER,  -- Конкретный сезон для отслеживания (опционально)
-    preferred_quality TEXT,  -- Предпочтительное качество видео (например: 1080p, 2160p, UHD, 4K)
+    preferred_quality TEXT,  -- Предпочтительное качество видео (например: 1080p, 2160p SDR, 2160p HDR, UHD, 4K)
     preferred_audio TEXT,  -- Предпочтительная озвучка (например: русская, русский, dub, озвучка)
-    min_releases_count INTEGER DEFAULT NULL,  -- Минимальное количество раздач для отслеживания
+    max_releases_count INTEGER DEFAULT NULL,  -- Максимальное количество раздач для отслеживания
     check_interval INTEGER DEFAULT NULL  -- Интервал проверки в минутах (NULL = использовать значение по умолчанию)
     
     -- Метаданные (расширенные - для сериалов)
@@ -86,5 +86,5 @@ CREATE INDEX IF NOT EXISTS idx_notifications_imdb ON notifications_history(imdb_
 CREATE INDEX IF NOT EXISTS idx_notifications_sent_at ON notifications_history(sent_at);
 
 -- Комментарии к полям
-COMMENT ON COLUMN imdb_watchlist.min_releases_count IS 'Минимальное количество раздач для отслеживания (NULL = отслеживать все раздачи)';
+COMMENT ON COLUMN imdb_watchlist.max_releases_count IS 'Максимальное количество раздач для отслеживания (NULL = отслеживать все раздачи)';
 COMMENT ON COLUMN imdb_watchlist.check_interval IS 'Интервал проверки в минутах (NULL = использовать значение по умолчанию)';

@@ -27,15 +27,16 @@
         [data-theme="light"] {
             /* Светлая тема */
             --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --bg-secondary: rgba(255, 255, 255, 0.9);
+            --bg-secondary: rgba(255, 255, 255, 0.95);
             --bg-card: #ffffff;
             --text-primary: #1a1a2e;
-            --text-secondary: rgba(26, 26, 46, 0.8);
-            --text-muted: rgba(26, 26, 46, 0.6);
-            --border-color: rgba(0, 0, 0, 0.1);
+            --text-secondary: rgba(26, 26, 46, 0.85);
+            --text-muted: rgba(26, 26, 46, 0.65);
+            --border-color: rgba(0, 0, 0, 0.15);
             --accent: #e94560;
             --accent-secondary: #2ed573;
         }
+        
         
         * {
             margin: 0;
@@ -126,11 +127,18 @@
         .btn-primary {
             background: linear-gradient(135deg, var(--accent), #0f3460);
             color: #fff;
+            font-weight: 600;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.3);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+            background: linear-gradient(135deg, #ff5a7a, #1a4a7a);
+        }
+        
+        .modal-body .btn-primary {
+            padding: 14px 20px;
+            font-size: 16px;
         }
         
         .btn-secondary {
@@ -519,43 +527,130 @@
         .modal-content {
             background: var(--bg-card);
             border-radius: 16px;
-            padding: 30px;
+            padding: 0;
             max-width: 500px;
             width: 100%;
             max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
+            overflow: hidden;
+            border: 2px solid var(--accent);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background: rgba(30, 30, 50, 0.98) !important;
+            border: 2px solid rgba(233, 69, 96, 0.5);
+        }
+        
+        [data-theme="light"] .modal-content {
+            background: #ffffff !important;
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            padding: 20px 30px;
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-header {
+            background: rgba(40, 40, 60, 0.95) !important;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+        }
+        
+        [data-theme="light"] .modal-header {
+            background: rgba(245, 247, 250, 0.95) !important;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.12);
         }
         
         .modal-header h3 {
             font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        [data-theme="dark"] .modal-header h3 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .modal-header h3 {
+            color: #1a1a2e !important;
         }
         
         .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-primary);
+            background: rgba(233, 69, 96, 0.15);
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            color: var(--accent);
             font-size: 24px;
             cursor: pointer;
-            padding: 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            line-height: 1;
+            font-weight: bold;
+        }
+        
+        [data-theme="dark"] .modal-close {
+            background: rgba(233, 69, 96, 0.2) !important;
+            border-color: rgba(233, 69, 96, 0.5) !important;
+            color: #ff6b7d !important;
+        }
+        
+        [data-theme="light"] .modal-close {
+            background: rgba(233, 69, 96, 0.1) !important;
+            border-color: rgba(233, 69, 96, 0.3) !important;
+            color: #e94560 !important;
+        }
+        
+        .modal-close:hover {
+            background: rgba(233, 69, 96, 0.3) !important;
+            border-color: var(--accent) !important;
+            transform: scale(1.05);
+        }
+        
+        [data-theme="dark"] .modal-close:hover {
+            background: rgba(233, 69, 96, 0.35) !important;
+            color: #ff8a9a !important;
+        }
+        
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .form-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 14px;
-            color: var(--text-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .form-group label {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .form-group label {
+            color: #1a1a2e !important;
         }
         
         .form-group input,
@@ -563,25 +658,132 @@
             width: 100%;
             padding: 12px 15px;
             border: 2px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 8px;
             background: var(--bg-secondary);
             color: var(--text-primary);
             font-size: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        [data-theme="dark"] .form-group input,
+        [data-theme="dark"] .form-group select {
+            background: rgba(20, 20, 35, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .form-group input,
+        [data-theme="light"] .form-group select {
+            background: #f8f9fa !important;
+            border-color: rgba(0, 0, 0, 0.2) !important;
+            color: #1a1a2e !important;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent) !important;
+            background: var(--bg-card) !important;
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15) !important;
+        }
+        
+        [data-theme="dark"] .form-group input:focus,
+        [data-theme="dark"] .form-group select:focus {
+            background: rgba(25, 25, 40, 0.95) !important;
+        }
+        
+        [data-theme="light"] .form-group input:focus,
+        [data-theme="light"] .form-group select:focus {
+            background: #ffffff !important;
         }
         
         .form-group input[type="checkbox"] {
-            width: auto;
+            width: 20px;
+            height: 20px;
             padding: 0;
             margin: 0;
-            width: 18px;
-            height: 18px;
             cursor: pointer;
             accent-color: var(--accent);
+            flex-shrink: 0;
         }
         
         .form-group select option {
             background: var(--bg-card);
             color: var(--text-primary);
+            padding: 10px;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        [data-theme="dark"] .form-group small {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        [data-theme="light"] .form-group small {
+            color: rgba(26, 26, 46, 0.7) !important;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .checkbox-group {
+            background: rgba(20, 20, 35, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        
+        [data-theme="light"] .checkbox-group {
+            background: #f8f9fa !important;
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: normal;
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .checkbox-group label:hover {
+            background: rgba(233, 69, 96, 0.1);
+            border-color: rgba(233, 69, 96, 0.2);
+        }
+        
+        [data-theme="dark"] .checkbox-group label:hover {
+            background: rgba(233, 69, 96, 0.15) !important;
+        }
+        
+        .checkbox-group label span {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        [data-theme="dark"] .checkbox-group label span {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .checkbox-group label span {
+            color: #1a1a2e !important;
         }
         
         .loading {
@@ -849,8 +1051,8 @@
                         {% if item.preferred_audio %}
                         <span>🎙 Озвучка: {{ item.preferred_audio }}</span>
                         {% endif %}
-                        {% if item.min_releases_count %}
-                        <span>📊 Минимум: {{ item.min_releases_count }}</span>
+                        {% if item.max_releases_count %}
+                        <span>📊 Максимум: {{ item.max_releases_count }}</span>
                         {% endif %}
                     </div>
                     
@@ -874,7 +1076,7 @@
                         <button class="btn btn-secondary" onclick="toggleItem({{ item.id }})">
                             {% if item.enabled %}⏸️ Пауза{% else %}▶️ Включить{% endif %}
                         </button>
-                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title|replace("'", "\\'") }}', '{{ item.type }}', {{ item.target_season if item.target_season else 'null' }}, '{{ (item.preferred_quality or '')|replace("'", "\\'") }}', '{{ (item.preferred_audio or '')|replace("'", "\\'") }}', {{ item.min_releases_count if item.min_releases_count else 'null' }}, {{ item.check_interval if item.check_interval else 'null' }})">
+                        <button class="btn btn-secondary" onclick="openEditModal({{ item.id }}, '{{ item.title|replace("'", "\\'") }}', '{{ item.type }}', {{ item.target_season if item.target_season else 'null' }}, '{{ (item.preferred_quality or '')|replace("'", "\\'") }}', '{{ (item.preferred_audio or '')|replace("'", "\\'") }}', {{ item.max_releases_count if item.max_releases_count else 'null' }}, {{ item.check_interval if item.check_interval else 'null' }})">
                             ✏️ Изменить
                         </button>
                         <button class="btn btn-secondary" onclick="refreshItem({{ item.id }})">
@@ -924,11 +1126,12 @@
                 <h3>✏️ Редактировать</h3>
                 <button class="modal-close" onclick="closeEditModal()">&times;</button>
             </div>
-            <form method="post" id="editForm">
+            <div class="modal-body">
+                <form method="post" id="editForm">
                 <div class="form-group">
                     <label for="editTitle">Название</label>
                     <input type="text" id="editTitle" name="title" required>
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                    <small>
                         Можно указать сезон в названии (например: "Stranger Things 4 сезон")
                     </small>
                 </div>
@@ -942,32 +1145,36 @@
                 <div class="form-group" id="seasonGroup" style="display: none;">
                     <label for="editSeason">Сезон для отслеживания (опционально)</label>
                     <input type="number" id="editSeason" name="target_season" min="1" max="100" placeholder="Оставьте пустым для всех сезонов">
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                    <small>
                         Если указан, поиск будет выполняться только для этого сезона
                     </small>
                 </div>
                 <div class="form-group">
                     <label>Предпочтительное качество (можно выбрать несколько)</label>
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                    <div class="checkbox-group">
+                        <label>
                             <input type="checkbox" value="1080p" class="quality-checkbox">
                             <span>1080p (Full HD)</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
-                            <input type="checkbox" value="2160p" class="quality-checkbox">
-                            <span>2160p (4K/UHD)</span>
+                        <label>
+                            <input type="checkbox" value="2160p SDR" class="quality-checkbox">
+                            <span>2160p SDR (4K/UHD)</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                        <label>
+                            <input type="checkbox" value="2160p HDR" class="quality-checkbox">
+                            <span>2160p HDR (4K/UHD)</span>
+                        </label>
+                        <label>
                             <input type="checkbox" value="720p" class="quality-checkbox">
                             <span>720p (HD)</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                        <label>
                             <input type="checkbox" value="480p" class="quality-checkbox">
                             <span>480p (SD)</span>
                         </label>
                     </div>
                     <input type="hidden" id="editQuality" name="preferred_quality" value="">
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                    <small>
                         Будут показываться релизы с любым из выбранных качеств
                     </small>
                 </div>
@@ -979,26 +1186,27 @@
                         <option value="оригинал">Оригинал (английский)</option>
                         <option value="dub">DUB (дубляж)</option>
                     </select>
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                    <small>
                         Будут показываться только релизы с указанной озвучкой
                     </small>
                 </div>
                 <div class="form-group">
-                    <label for="editMinReleases">Минимальное количество раздач для отслеживания (опционально)</label>
-                    <input type="number" id="editMinReleases" name="min_releases_count" min="1" placeholder="Оставьте пустым для отслеживания всех раздач">
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
-                        Если указано, будут отслеживаться только раздачи, когда их количество достигнет этого значения
+                    <label for="editMaxReleases">Максимальное количество раздач для отслеживания (опционально)</label>
+                    <input type="number" id="editMaxReleases" name="max_releases_count" min="1" placeholder="Оставьте пустым для отслеживания всех раздач">
+                    <small>
+                        Если указано, уведомления будут отправляться только пока количество раздач не превысит это значение
                     </small>
                 </div>
                 <div class="form-group">
                     <label for="editCheckInterval">Интервал проверки в минутах (опционально)</label>
                     <input type="number" id="editCheckInterval" name="check_interval" min="1" placeholder="Оставьте пустым для использования значения по умолчанию (30 минут)">
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
+                    <small>
                         Если указано, этот элемент будет проверяться с указанным интервалом (в минутах). Иначе используется интервал по умолчанию.
                     </small>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Сохранить</button>
-            </form>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Сохранить</button>
+                </form>
+            </div>
         </div>
     </div>
     
@@ -1008,23 +1216,26 @@
                 <h3 id="releasesTitle">📥 Релизы</h3>
                 <button class="modal-close" onclick="closeReleasesModal()">&times;</button>
             </div>
-            <div id="releasesFilters" style="margin-bottom: 20px; display: none;">
-                <div class="filters-row">
-                    <input type="text" id="releaseSearch" placeholder="Поиск по названию" oninput="filterReleases()">
-                    <select id="releaseQualityFilter" onchange="filterReleases()">
-                        <option value="">Все качества</option>
-                        <option value="1080p">1080p</option>
-                        <option value="2160p">2160p</option>
-                        <option value="720p">720p</option>
-                    </select>
-                    <select id="releaseTrackerFilter" onchange="filterReleases()">
-                        <option value="">Все трекеры</option>
-                    </select>
-                    <input type="number" id="releaseMinSeeders" placeholder="Мин. сидеры" min="0" onchange="filterReleases()">
-                    <input type="number" id="releaseMaxSize" placeholder="Макс. размер (GB)" min="0" step="0.1" onchange="filterReleases()">
+            <div class="modal-body">
+                <div id="releasesFilters" style="margin-bottom: 20px; display: none;">
+                    <div class="filters-row">
+                        <input type="text" id="releaseSearch" placeholder="Поиск по названию" oninput="filterReleases()">
+                        <select id="releaseQualityFilter" onchange="filterReleases()">
+                            <option value="">Все качества</option>
+                            <option value="1080p">1080p</option>
+                            <option value="2160p SDR">2160p SDR</option>
+                            <option value="2160p HDR">2160p HDR</option>
+                            <option value="720p">720p</option>
+                        </select>
+                        <select id="releaseTrackerFilter" onchange="filterReleases()">
+                            <option value="">Все трекеры</option>
+                        </select>
+                        <input type="number" id="releaseMinSeeders" placeholder="Мин. сидеры" min="0" onchange="filterReleases()">
+                        <input type="number" id="releaseMaxSize" placeholder="Макс. размер (GB)" min="0" step="0.1" onchange="filterReleases()">
+                    </div>
                 </div>
+                <div id="releasesList"></div>
             </div>
-            <div id="releasesList"></div>
         </div>
     </div>
     
@@ -1034,9 +1245,11 @@
                 <h3>📥 Экспорт watchlist</h3>
                 <button class="modal-close" onclick="closeExportModal()">&times;</button>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-                <button class="btn btn-primary" onclick="exportJSON()">📄 Экспорт в JSON</button>
-                <button class="btn btn-primary" onclick="exportCSV()">📊 Экспорт в CSV</button>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button class="btn btn-primary" onclick="exportJSON()">📄 Экспорт в JSON</button>
+                    <button class="btn btn-primary" onclick="exportCSV()">📊 Экспорт в CSV</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1047,16 +1260,18 @@
                 <h3>📤 Импорт watchlist</h3>
                 <button class="modal-close" onclick="closeImportModal()">&times;</button>
             </div>
-            <form id="importForm" onsubmit="importJSON(event)">
-                <div class="form-group">
-                    <label for="importFile">Выберите JSON файл</label>
-                    <input type="file" id="importFile" accept=".json" required>
-                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">
-                        Поддерживается только формат JSON
-                    </small>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Импортировать</button>
-            </form>
+            <div class="modal-body">
+                <form id="importForm" onsubmit="importJSON(event)">
+                    <div class="form-group">
+                        <label for="importFile">Выберите JSON файл</label>
+                        <input type="file" id="importFile" accept=".json" required>
+                        <small>
+                            Поддерживается только формат JSON
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Импортировать</button>
+                </form>
+            </div>
         </div>
     </div>
     
@@ -1066,8 +1281,10 @@
                 <h3>📊 Статистика</h3>
                 <button class="modal-close" onclick="closeStatsModal()">&times;</button>
             </div>
-            <div id="statsContent">
-                <div class="loading"></div>
+            <div class="modal-body">
+                <div id="statsContent">
+                    <div class="loading"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1441,13 +1658,13 @@
             }
         }
         
-        function openEditModal(id, title, type, targetSeason, preferredQuality, preferredAudio, minReleasesCount, checkInterval) {
+        function openEditModal(id, title, type, targetSeason, preferredQuality, preferredAudio, maxReleasesCount, checkInterval) {
             document.getElementById('editForm').action = `/edit/${id}`;
             document.getElementById('editTitle').value = title;
             document.getElementById('editType').value = type;
             document.getElementById('editSeason').value = targetSeason || '';
             document.getElementById('editAudio').value = preferredAudio || '';
-            document.getElementById('editMinReleases').value = minReleasesCount || '';
+            document.getElementById('editMaxReleases').value = maxReleasesCount || '';
             document.getElementById('editCheckInterval').value = checkInterval || '';
             
             const qualityCheckboxes = document.querySelectorAll('.quality-checkbox');
@@ -1455,8 +1672,15 @@
             
             if (preferredQuality) {
                 const qualities = preferredQuality.split(',').map(q => q.trim());
+                // Проверяем, есть ли старое значение "2160p" без SDR/HDR
+                const hasOld2160p = qualities.includes('2160p') && !qualities.includes('2160p SDR') && !qualities.includes('2160p HDR');
+                
                 qualityCheckboxes.forEach(cb => {
                     if (qualities.includes(cb.value)) {
+                        cb.checked = true;
+                    }
+                    // Преобразуем старое значение "2160p" в оба новых варианта
+                    if (hasOld2160p && (cb.value === '2160p SDR' || cb.value === '2160p HDR')) {
                         cb.checked = true;
                     }
                 });
